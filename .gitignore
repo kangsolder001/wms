@@ -1,0 +1,16 @@
+.git/
+bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+vendor/
+node_modules/
+.env
+.env.local
+dist/
+wms.log
+.mimocode/

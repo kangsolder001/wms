@@ -1,0 +1,138 @@
+package repository
+
+import (
+	"context"
+	"database/sql"
+	"fmt"
+
+	"wms/domain/entity"
+	"wms/pkg/logger"
+)
+
+type postgresStockRepository struct {
+	db  *sql.DB
+	log logger.Logger
+}
+
+func NewPostgresStockRepository(db *sql.DB, log logger.Logger) *postgresStockRepository {
+	return &postgresStockRepository{db: db, log: log}
+}
+
+func (r *postgresStockRepository) FindByID(ctx context.Context, id string) (*entity.Stock, error) {
+	s := &entity.Stock{}
+	err := r.db.QueryRowContext(ctx,
+		`SELECT id, item_id, location_id, quantity, reserved_quantity, batch_number, expiry_date, updated_at 
+		 FROM stock WHERE id = $1`, id,
+	).Scan(&s.ID, &s.ItemID, &s.LocationID, &s.Quantity, &s.ReservedQuantity, &s.BatchNumber, &s.ExpiryDate, &s.UpdatedAt)
+	if err != nil {
+		return nil, fmt.Errorf("stock not found: %w", err)
+	}
+	return s, nil
+}
+
+func (r *postgresStockRepository) FindByItemAndLocation(ctx context.Context, itemID, locationID string) (*entity.Stock, error) {
+	s := &entity.Stock{}
+	err := r.db.QueryRowContext(ctx,
+		`SELECT id, item_id, location_id, quantity, reserved_quantity, batch_number, expiry_date, updated_at 
+		 FROM stock WHERE item_id = $1 AND location_id = $2`, itemID, locationID,
+	).Scan(&s.ID, &s.ItemID, &s.LocationID, &s.Quantity, &s.ReservedQuantity, &s.BatchNumber, &s.ExpiryDate, &s.UpdatedAt)
+	if err != nil {
+		return nil, fmt.Errorf("stock not found: %w", err)
+	}
+	return s, nil
+}
+
+func (r *postgresStockRepository) FindByItem(ctx context.Context, itemID string) ([]*entity.Stock, error) {
+	rows, err := r.db.QueryContext(ctx,
+		`SELECT id, item_id, location_id, quantity, reserved_quantity, batch_number, expiry_date, updated_at 
+		 FROM stock WHERE item_id = $1 AND quantity > 0`, itemID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var stocks []*entity.Stock
+	for rows.Next() {
+		s := &entity.Stock{}
+		if err := rows.Scan(&s.ID, &s.ItemID, &s.LocationID, &s.Quantity, &s.ReservedQuantity, &s.BatchNumber, &s.ExpiryDate, &s.UpdatedAt); err != nil {
+			continue
+		}
+		stocks = append(stocks, s)
+	}
+
+	return stocks, nil
+}
+
+func (r *postgresStockRepository) Create(ctx context.Context, stock *entity.Stock) error {
+	err := r.db.QueryRowContext(ctx,
+		`INSERT INTO stock (item_id, location_id, quantity, reserved_quantity, batch_number, expiry_date, updated_at) 
+		 VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
+		stock.ItemID, stock.LocationID, stock.Quantity, stock.ReservedQuantity, stock.BatchNumber, stock.ExpiryDate, stock.UpdatedAt,
+	).Scan(&stock.ID)
+	if err != nil {
+		return fmt.Errorf("failed to create stock: %w", err)
+	}
+	return nil
+}
+
+func (r *postgresStockRepository) UpdateQuantity(ctx context.Context, id string, quantity float64) error {
+	_, err := r.db.ExecContext(ctx,
+		"UPDATE stock SET quantity = $1, updated_at = NOW() WHERE id = $2", quantity, id,
+	)
+	return err
+}
+
+func (r *postgresStockRepository) Reserve(ctx context.Context, itemID, locationID string, quantity float64) error {
+	_, err := r.db.ExecContext(ctx,
+		"UPDATE stock SET reserved_quantity = reserved_quantity + $1 WHERE item_id = $2 AND location_id = $3",
+		quantity, itemID, locationID,
+	)
+	return err
+}
+
+func (r *postgresStockRepository) Release(ctx context.Context, itemID, locationID string, quantity float64) error {
+	_, err := r.db.ExecContext(ctx,
+		"UPDATE stock SET reserved_quantity = reserved_quantity - $1 WHERE item_id = $2 AND location_id = $3",
+		quantity, itemID, locationID,
+	)
+	return err
+}
+
+func (r *postgresStockRepository) List(ctx context.Context, page, limit int) ([]*entity.Stock, int, error) {
+	offset := (page - 1) * limit
+
+	var total int
+	err := r.db.QueryRowContext(ctx, "SELECT COUNT(*) FROM stock WHERE quantity > 0").Scan(&total)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	rows, err := r.db.QueryContext(ctx,
+		`SELECT id, item_id, location_id, quantity, reserved_quantity, batch_number, expiry_date, updated_at 
+		 FROM stock WHERE quantity > 0 ORDER BY updated_at DESC LIMIT $1 OFFSET $2`, limit, offset,
+	)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer rows.Close()
+
+	var stocks []*entity.Stock
+	for rows.Next() {
+		s := &entity.Stock{}
+		if err := rows.Scan(&s.ID, &s.ItemID, &s.LocationID, &s.Quantity, &s.ReservedQuantity, &s.BatchNumber, &s.ExpiryDate, &s.UpdatedAt); err != nil {
+			continue
+		}
+		stocks = append(stocks, s)
+	}
+
+	return stocks, total, nil
+}
+
+func (r *postgresStockRepository) GetTotalStockByItem(ctx context.Context, itemID string) (float64, error) {
+	var total float64
+	err := r.db.QueryRowContext(ctx,
+		"SELECT COALESCE(SUM(quantity), 0) FROM stock WHERE item_id = $1", itemID,
+	).Scan(&total)
+	return total, err
+}
