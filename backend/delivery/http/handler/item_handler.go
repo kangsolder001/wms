@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"encoding/json"
 	"net/http"
 	"strconv"
 
@@ -10,7 +9,7 @@ import (
 	"wms/delivery/http/response"
 	"wms/pkg/logger"
 
-	"github.com/go-chi/chi/v5"
+	"github.com/gin-gonic/gin"
 )
 
 type ItemHandler struct {
@@ -22,9 +21,9 @@ func NewItemHandler(itemUC usecase.ItemUsecase, log logger.Logger) *ItemHandler 
 	return &ItemHandler{itemUC: itemUC, log: log}
 }
 
-func (h *ItemHandler) List(w http.ResponseWriter, r *http.Request) {
-	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
-	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
+func (h *ItemHandler) List(c *gin.Context) {
+	page, _ := strconv.Atoi(c.Query("page"))
+	limit, _ := strconv.Atoi(c.Query("limit"))
 	if page < 1 {
 		page = 1
 	}
@@ -32,72 +31,72 @@ func (h *ItemHandler) List(w http.ResponseWriter, r *http.Request) {
 		limit = 10
 	}
 
-	items, total, err := h.itemUC.ListItems(r.Context(), page, limit)
+	items, total, err := h.itemUC.ListItems(c.Request.Context(), page, limit)
 	if err != nil {
-		response.Error(w, http.StatusInternalServerError, err.Error())
+		response.Error(c, http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	response.JSONWithMeta(w, http.StatusOK, items, &response.Meta{
+	response.JSONWithMeta(c, http.StatusOK, items, &response.Meta{
 		Page:  page,
 		Limit: limit,
 		Total: total,
 	})
 }
 
-func (h *ItemHandler) Get(w http.ResponseWriter, r *http.Request) {
-	id := chi.URLParam(r, "id")
+func (h *ItemHandler) Get(c *gin.Context) {
+	id := c.Param("id")
 
-	item, err := h.itemUC.GetItem(r.Context(), id)
+	item, err := h.itemUC.GetItem(c.Request.Context(), id)
 	if err != nil {
-		response.Error(w, http.StatusNotFound, err.Error())
+		response.Error(c, http.StatusNotFound, err.Error())
 		return
 	}
 
-	response.JSON(w, http.StatusOK, item)
+	response.JSON(c, http.StatusOK, item)
 }
 
-func (h *ItemHandler) Create(w http.ResponseWriter, r *http.Request) {
+func (h *ItemHandler) Create(c *gin.Context) {
 	var req dto.CreateItemRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		response.Error(w, http.StatusBadRequest, "invalid request body")
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Error(c, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
-	item, err := h.itemUC.CreateItem(r.Context(), &req)
+	item, err := h.itemUC.CreateItem(c.Request.Context(), &req)
 	if err != nil {
-		response.Error(w, http.StatusBadRequest, err.Error())
+		response.Error(c, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	response.JSON(w, http.StatusCreated, item)
+	response.JSON(c, http.StatusCreated, item)
 }
 
-func (h *ItemHandler) Update(w http.ResponseWriter, r *http.Request) {
-	id := chi.URLParam(r, "id")
+func (h *ItemHandler) Update(c *gin.Context) {
+	id := c.Param("id")
 
 	var req dto.UpdateItemRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		response.Error(w, http.StatusBadRequest, "invalid request body")
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Error(c, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
-	item, err := h.itemUC.UpdateItem(r.Context(), id, &req)
+	item, err := h.itemUC.UpdateItem(c.Request.Context(), id, &req)
 	if err != nil {
-		response.Error(w, http.StatusBadRequest, err.Error())
+		response.Error(c, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	response.JSON(w, http.StatusOK, item)
+	response.JSON(c, http.StatusOK, item)
 }
 
-func (h *ItemHandler) Delete(w http.ResponseWriter, r *http.Request) {
-	id := chi.URLParam(r, "id")
+func (h *ItemHandler) Delete(c *gin.Context) {
+	id := c.Param("id")
 
-	if err := h.itemUC.DeleteItem(r.Context(), id); err != nil {
-		response.Error(w, http.StatusBadRequest, err.Error())
+	if err := h.itemUC.DeleteItem(c.Request.Context(), id); err != nil {
+		response.Error(c, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	response.JSON(w, http.StatusOK, map[string]string{"message": "item deleted"})
+	response.JSON(c, http.StatusOK, gin.H{"message": "item deleted"})
 }

@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"encoding/json"
 	"net/http"
 	"strconv"
 
@@ -10,7 +9,7 @@ import (
 	"wms/delivery/http/response"
 	"wms/pkg/logger"
 
-	"github.com/go-chi/chi/v5"
+	"github.com/gin-gonic/gin"
 )
 
 type InboundHandler struct {
@@ -22,9 +21,9 @@ func NewInboundHandler(inboundUC usecase.InboundUsecase, log logger.Logger) *Inb
 	return &InboundHandler{inboundUC: inboundUC, log: log}
 }
 
-func (h *InboundHandler) ListPurchaseOrders(w http.ResponseWriter, r *http.Request) {
-	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
-	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
+func (h *InboundHandler) ListPurchaseOrders(c *gin.Context) {
+	page, _ := strconv.Atoi(c.Query("page"))
+	limit, _ := strconv.Atoi(c.Query("limit"))
 	if page < 1 {
 		page = 1
 	}
@@ -32,65 +31,65 @@ func (h *InboundHandler) ListPurchaseOrders(w http.ResponseWriter, r *http.Reque
 		limit = 10
 	}
 
-	pos, total, err := h.inboundUC.ListPurchaseOrders(r.Context(), page, limit)
+	pos, total, err := h.inboundUC.ListPurchaseOrders(c.Request.Context(), page, limit)
 	if err != nil {
-		response.Error(w, http.StatusInternalServerError, err.Error())
+		response.Error(c, http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	response.JSONWithMeta(w, http.StatusOK, pos, &response.Meta{
+	response.JSONWithMeta(c, http.StatusOK, pos, &response.Meta{
 		Page:  page,
 		Limit: limit,
 		Total: total,
 	})
 }
 
-func (h *InboundHandler) GetPurchaseOrder(w http.ResponseWriter, r *http.Request) {
-	id := chi.URLParam(r, "id")
+func (h *InboundHandler) GetPurchaseOrder(c *gin.Context) {
+	id := c.Param("id")
 
-	po, err := h.inboundUC.GetPurchaseOrder(r.Context(), id)
+	po, err := h.inboundUC.GetPurchaseOrder(c.Request.Context(), id)
 	if err != nil {
-		response.Error(w, http.StatusNotFound, err.Error())
+		response.Error(c, http.StatusNotFound, err.Error())
 		return
 	}
 
-	response.JSON(w, http.StatusOK, po)
+	response.JSON(c, http.StatusOK, po)
 }
 
-func (h *InboundHandler) CreatePurchaseOrder(w http.ResponseWriter, r *http.Request) {
+func (h *InboundHandler) CreatePurchaseOrder(c *gin.Context) {
 	var req dto.CreatePurchaseOrderRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		response.Error(w, http.StatusBadRequest, "invalid request body")
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Error(c, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
-	userID := r.Context().Value("user_id").(string)
+	userID := c.GetString("user_id")
 
-	po, err := h.inboundUC.CreatePurchaseOrder(r.Context(), &req, userID)
+	po, err := h.inboundUC.CreatePurchaseOrder(c.Request.Context(), &req, userID)
 	if err != nil {
-		response.Error(w, http.StatusBadRequest, err.Error())
+		response.Error(c, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	response.JSON(w, http.StatusCreated, po)
+	response.JSON(c, http.StatusCreated, po)
 }
 
-func (h *InboundHandler) ReceiveGoods(w http.ResponseWriter, r *http.Request) {
-	poID := chi.URLParam(r, "id")
+func (h *InboundHandler) ReceiveGoods(c *gin.Context) {
+	poID := c.Param("id")
 
 	var req dto.ReceiveGoodsRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		response.Error(w, http.StatusBadRequest, "invalid request body")
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Error(c, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
-	userID := r.Context().Value("user_id").(string)
+	userID := c.GetString("user_id")
 
-	grn, err := h.inboundUC.ReceiveGoods(r.Context(), poID, &req, userID)
+	grn, err := h.inboundUC.ReceiveGoods(c.Request.Context(), poID, &req, userID)
 	if err != nil {
-		response.Error(w, http.StatusBadRequest, err.Error())
+		response.Error(c, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	response.JSON(w, http.StatusCreated, grn)
+	response.JSON(c, http.StatusCreated, grn)
 }

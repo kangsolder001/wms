@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"encoding/json"
 	"net/http"
 	"strconv"
 
@@ -9,6 +8,8 @@ import (
 	"wms/application/usecase"
 	"wms/delivery/http/response"
 	"wms/pkg/logger"
+
+	"github.com/gin-gonic/gin"
 )
 
 type InventoryHandler struct {
@@ -20,9 +21,9 @@ func NewInventoryHandler(inventoryUC usecase.InventoryUsecase, log logger.Logger
 	return &InventoryHandler{inventoryUC: inventoryUC, log: log}
 }
 
-func (h *InventoryHandler) ListStock(w http.ResponseWriter, r *http.Request) {
-	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
-	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
+func (h *InventoryHandler) ListStock(c *gin.Context) {
+	page, _ := strconv.Atoi(c.Query("page"))
+	limit, _ := strconv.Atoi(c.Query("limit"))
 	if page < 1 {
 		page = 1
 	}
@@ -30,55 +31,55 @@ func (h *InventoryHandler) ListStock(w http.ResponseWriter, r *http.Request) {
 		limit = 10
 	}
 
-	stocks, total, err := h.inventoryUC.GetStock(r.Context(), page, limit)
+	stocks, total, err := h.inventoryUC.GetStock(c.Request.Context(), page, limit)
 	if err != nil {
-		response.Error(w, http.StatusInternalServerError, err.Error())
+		response.Error(c, http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	response.JSONWithMeta(w, http.StatusOK, stocks, &response.Meta{
+	response.JSONWithMeta(c, http.StatusOK, stocks, &response.Meta{
 		Page:  page,
 		Limit: limit,
 		Total: total,
 	})
 }
 
-func (h *InventoryHandler) GetStockByItem(w http.ResponseWriter, r *http.Request) {
-	itemID := r.URL.Query().Get("item_id")
+func (h *InventoryHandler) GetStockByItem(c *gin.Context) {
+	itemID := c.Query("item_id")
 	if itemID == "" {
-		response.Error(w, http.StatusBadRequest, "item_id is required")
+		response.Error(c, http.StatusBadRequest, "item_id is required")
 		return
 	}
 
-	stocks, err := h.inventoryUC.GetStockByItem(r.Context(), itemID)
+	stocks, err := h.inventoryUC.GetStockByItem(c.Request.Context(), itemID)
 	if err != nil {
-		response.Error(w, http.StatusInternalServerError, err.Error())
+		response.Error(c, http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	response.JSON(w, http.StatusOK, stocks)
+	response.JSON(c, http.StatusOK, stocks)
 }
 
-func (h *InventoryHandler) AdjustStock(w http.ResponseWriter, r *http.Request) {
+func (h *InventoryHandler) AdjustStock(c *gin.Context) {
 	var req dto.AdjustStockRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		response.Error(w, http.StatusBadRequest, "invalid request body")
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Error(c, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
-	userID := r.Context().Value("user_id").(string)
+	userID := c.GetString("user_id")
 
-	if err := h.inventoryUC.AdjustStock(r.Context(), &req, userID); err != nil {
-		response.Error(w, http.StatusBadRequest, err.Error())
+	if err := h.inventoryUC.AdjustStock(c.Request.Context(), &req, userID); err != nil {
+		response.Error(c, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	response.JSON(w, http.StatusOK, map[string]string{"message": "stock adjusted"})
+	response.JSON(c, http.StatusOK, gin.H{"message": "stock adjusted"})
 }
 
-func (h *InventoryHandler) ListMovements(w http.ResponseWriter, r *http.Request) {
-	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
-	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
+func (h *InventoryHandler) ListMovements(c *gin.Context) {
+	page, _ := strconv.Atoi(c.Query("page"))
+	limit, _ := strconv.Atoi(c.Query("limit"))
 	if page < 1 {
 		page = 1
 	}
@@ -86,13 +87,13 @@ func (h *InventoryHandler) ListMovements(w http.ResponseWriter, r *http.Request)
 		limit = 10
 	}
 
-	movements, total, err := h.inventoryUC.GetStockMovements(r.Context(), page, limit)
+	movements, total, err := h.inventoryUC.GetStockMovements(c.Request.Context(), page, limit)
 	if err != nil {
-		response.Error(w, http.StatusInternalServerError, err.Error())
+		response.Error(c, http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	response.JSONWithMeta(w, http.StatusOK, movements, &response.Meta{
+	response.JSONWithMeta(c, http.StatusOK, movements, &response.Meta{
 		Page:  page,
 		Limit: limit,
 		Total: total,

@@ -5,21 +5,15 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"wms/config"
 	"wms/delivery/http/handler"
 	"wms/delivery/http/middleware"
 
-	"github.com/go-chi/chi/v5"
-	chimw "github.com/go-chi/chi/v5/middleware"
-	"github.com/rs/cors"
+	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/gin"
 )
-
-func withRole(rm *middleware.RoleMiddleware, roles []string, next http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		rm.RequireRole(roles...).Middleware(next).ServeHTTP(w, r)
-	}
-}
 
 func NewRouter(
 	authHandler *handler.AuthHandler,
@@ -34,106 +28,109 @@ func NewRouter(
 	roleMiddleware *middleware.RoleMiddleware,
 	loggingMiddleware *middleware.LoggingMiddleware,
 	corsConfig config.CORSConfig,
-) http.Handler {
-	r := chi.NewRouter()
+) *gin.Engine {
+	r := gin.Default()
 
-	r.Use(chimw.RequestID)
-	r.Use(chimw.RealIP)
-	r.Use(loggingMiddleware.Handle)
-	r.Use(chimw.Recoverer)
-	r.Use(chimw.Heartbeat("/health"))
+	r.Use(loggingMiddleware.Handle())
 
-	c := cors.New(cors.Options{
-		AllowedOrigins:   corsConfig.AllowedOrigins,
-		AllowedMethods:   corsConfig.AllowedMethods,
-		AllowedHeaders:   corsConfig.AllowedHeaders,
+	r.Use(cors.New(cors.Config{
+		AllowOrigins:     corsConfig.AllowedOrigins,
+		AllowMethods:     corsConfig.AllowedMethods,
+		AllowHeaders:     corsConfig.AllowedHeaders,
 		AllowCredentials: corsConfig.AllowCredentials,
-	})
-	r.Use(c.Handler)
+		MaxAge:           12 * time.Hour,
+	}))
 
 	adminRoles := []string{"admin"}
 	managerRoles := []string{"admin", "manager"}
 	operatorRoles := []string{"admin", "manager", "operator"}
 
-	r.Route("/api/v1", func(r chi.Router) {
-		r.Post("/auth/login", authHandler.Login)
+	api := r.Group("/api/v1")
+	{
+		api.POST("/auth/login", authHandler.Login)
 
-		r.Group(func(r chi.Router) {
-			r.Use(authMiddleware.Handle)
+		auth := api.Group("")
+		auth.Use(authMiddleware.Handle())
+		{
+			auth.GET("/auth/me", authHandler.GetProfile)
 
-			r.Handle("/auth/register", withRole(roleMiddleware, managerRoles, authHandler.Register))
-			r.Get("/auth/me", authHandler.GetProfile)
-			r.Get("/auth/users", withRole(roleMiddleware, managerRoles, authHandler.ListUsers))
-			r.Put("/auth/users/{id}", withRole(roleMiddleware, managerRoles, authHandler.UpdateUser))
-			r.Delete("/auth/users/{id}", withRole(roleMiddleware, managerRoles, authHandler.DeleteUser))
+			auth.GET("/auth/users", roleMiddleware.RequireRole(managerRoles...), authHandler.ListUsers)
+			auth.PUT("/auth/users/:id", roleMiddleware.RequireRole(managerRoles...), authHandler.UpdateUser)
+			auth.DELETE("/auth/users/:id", roleMiddleware.RequireRole(managerRoles...), authHandler.DeleteUser)
 
-			r.Route("/items", func(r chi.Router) {
-				r.Get("/", itemHandler.List)
-				r.Post("/", withRole(roleMiddleware, managerRoles, itemHandler.Create))
-				r.Get("/{id}", itemHandler.Get)
-				r.Put("/{id}", withRole(roleMiddleware, managerRoles, itemHandler.Update))
-				r.Delete("/{id}", withRole(roleMiddleware, adminRoles, itemHandler.Delete))
-			})
+			items := auth.Group("/items")
+			{
+				items.GET("", itemHandler.List)
+				items.POST("", roleMiddleware.RequireRole(managerRoles...), itemHandler.Create)
+				items.GET("/:id", itemHandler.Get)
+				items.PUT("/:id", roleMiddleware.RequireRole(managerRoles...), itemHandler.Update)
+				items.DELETE("/:id", roleMiddleware.RequireRole(adminRoles...), itemHandler.Delete)
+			}
 
-			r.Route("/locations", func(r chi.Router) {
-				r.Get("/", locationHandler.List)
-				r.Post("/", withRole(roleMiddleware, managerRoles, locationHandler.Create))
-				r.Get("/{id}", locationHandler.Get)
-				r.Put("/{id}", withRole(roleMiddleware, managerRoles, locationHandler.Update))
-				r.Delete("/{id}", withRole(roleMiddleware, adminRoles, locationHandler.Delete))
-			})
+			locations := auth.Group("/locations")
+			{
+				locations.GET("", locationHandler.List)
+				locations.POST("", roleMiddleware.RequireRole(managerRoles...), locationHandler.Create)
+				locations.GET("/:id", locationHandler.Get)
+				locations.PUT("/:id", roleMiddleware.RequireRole(managerRoles...), locationHandler.Update)
+				locations.DELETE("/:id", roleMiddleware.RequireRole(adminRoles...), locationHandler.Delete)
+			}
 
-			r.Route("/stock", func(r chi.Router) {
-				r.Get("/", inventoryHandler.ListStock)
-				r.Get("/movements", inventoryHandler.ListMovements)
-				r.Post("/adjust", withRole(roleMiddleware, managerRoles, inventoryHandler.AdjustStock))
-			})
+			stock := auth.Group("/stock")
+			{
+				stock.GET("", inventoryHandler.ListStock)
+				stock.GET("/movements", inventoryHandler.ListMovements)
+				stock.POST("/adjust", roleMiddleware.RequireRole(managerRoles...), inventoryHandler.AdjustStock)
+			}
 
-			r.Route("/purchase-orders", func(r chi.Router) {
-				r.Get("/", inboundHandler.ListPurchaseOrders)
-				r.Post("/", withRole(roleMiddleware, managerRoles, inboundHandler.CreatePurchaseOrder))
-				r.Get("/{id}", inboundHandler.GetPurchaseOrder)
-				r.Post("/{id}/receive", withRole(roleMiddleware, operatorRoles, inboundHandler.ReceiveGoods))
-			})
+			po := auth.Group("/purchase-orders")
+			{
+				po.GET("", inboundHandler.ListPurchaseOrders)
+				po.POST("", roleMiddleware.RequireRole(managerRoles...), inboundHandler.CreatePurchaseOrder)
+				po.GET("/:id", inboundHandler.GetPurchaseOrder)
+				po.POST("/:id/receive", roleMiddleware.RequireRole(operatorRoles...), inboundHandler.ReceiveGoods)
+			}
 
-			r.Route("/sales-orders", func(r chi.Router) {
-				r.Get("/", outboundHandler.ListSalesOrders)
-				r.Post("/", withRole(roleMiddleware, managerRoles, outboundHandler.CreateSalesOrder))
-				r.Get("/{id}", outboundHandler.GetSalesOrder)
-				r.Post("/{id}/pick", withRole(roleMiddleware, operatorRoles, outboundHandler.PickOrder))
-				r.Post("/{id}/ship", withRole(roleMiddleware, operatorRoles, outboundHandler.ShipOrder))
-			})
+			so := auth.Group("/sales-orders")
+			{
+				so.GET("", outboundHandler.ListSalesOrders)
+				so.POST("", roleMiddleware.RequireRole(managerRoles...), outboundHandler.CreateSalesOrder)
+				so.GET("/:id", outboundHandler.GetSalesOrder)
+				so.POST("/:id/pick", roleMiddleware.RequireRole(operatorRoles...), outboundHandler.PickOrder)
+				so.POST("/:id/ship", roleMiddleware.RequireRole(operatorRoles...), outboundHandler.ShipOrder)
+			}
 
-			r.Route("/transfers", func(r chi.Router) {
-				r.Get("/", transferHandler.List)
-				r.Post("/", withRole(roleMiddleware, managerRoles, transferHandler.Create))
-				r.Put("/{id}/complete", withRole(roleMiddleware, operatorRoles, transferHandler.Complete))
-			})
+			transfers := auth.Group("/transfers")
+			{
+				transfers.GET("", transferHandler.List)
+				transfers.POST("", roleMiddleware.RequireRole(managerRoles...), transferHandler.Create)
+				transfers.PUT("/:id/complete", roleMiddleware.RequireRole(operatorRoles...), transferHandler.Complete)
+			}
 
-			r.Get("/dashboard/summary", dashboardHandler.GetSummary)
-		})
-	})
+			auth.GET("/dashboard/summary", dashboardHandler.GetSummary)
+		}
+	}
 
 	serveFrontend(r, "../frontend/dist")
 
 	return r
 }
 
-func serveFrontend(r chi.Router, distPath string) {
+func serveFrontend(r *gin.Engine, distPath string) {
 	if _, err := os.Stat(distPath); os.IsNotExist(err) {
 		return
 	}
 
 	fileServer := http.FileServer(http.Dir(distPath))
 
-	r.Get("/*", func(w http.ResponseWriter, req *http.Request) {
-		path := filepath.Join(distPath, req.URL.Path)
+	r.NoRoute(func(c *gin.Context) {
+		path := filepath.Join(distPath, c.Request.URL.Path)
 
 		if _, err := os.Stat(path); os.IsNotExist(err) || strings.HasSuffix(path, "/") {
-			http.ServeFile(w, req, filepath.Join(distPath, "index.html"))
+			c.File(filepath.Join(distPath, "index.html"))
 			return
 		}
 
-		fileServer.ServeHTTP(w, req)
+		fileServer.ServeHTTP(c.Writer, c.Request)
 	})
 }

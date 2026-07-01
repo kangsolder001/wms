@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"wms/application/dto"
@@ -9,7 +8,7 @@ import (
 	"wms/delivery/http/response"
 	"wms/pkg/logger"
 
-	"github.com/go-chi/chi/v5"
+	"github.com/gin-gonic/gin"
 )
 
 type AuthHandler struct {
@@ -21,30 +20,30 @@ func NewAuthHandler(authUC usecase.AuthUsecase, log logger.Logger) *AuthHandler 
 	return &AuthHandler{authUC: authUC, log: log}
 }
 
-func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
+func (h *AuthHandler) Login(c *gin.Context) {
 	var req struct {
 		Username string `json:"username"`
 		Password string `json:"password"`
 	}
 
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		response.Error(w, http.StatusBadRequest, "invalid request body")
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Error(c, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
-	result, err := h.authUC.Login(r.Context(), &dto.LoginRequest{
+	result, err := h.authUC.Login(c.Request.Context(), &dto.LoginRequest{
 		Username: req.Username,
 		Password: req.Password,
 	})
 	if err != nil {
-		response.Error(w, http.StatusUnauthorized, err.Error())
+		response.Error(c, http.StatusUnauthorized, err.Error())
 		return
 	}
 
-	response.JSON(w, http.StatusOK, result)
+	response.JSON(c, http.StatusOK, result)
 }
 
-func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
+func (h *AuthHandler) Register(c *gin.Context) {
 	var req struct {
 		Username string `json:"username"`
 		Email    string `json:"email"`
@@ -53,12 +52,12 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		Role     string `json:"role"`
 	}
 
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		response.Error(w, http.StatusBadRequest, "invalid request body")
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Error(c, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
-	result, err := h.authUC.Register(r.Context(), &dto.RegisterRequest{
+	result, err := h.authUC.Register(c.Request.Context(), &dto.RegisterRequest{
 		Username: req.Username,
 		Email:    req.Email,
 		Password: req.Password,
@@ -66,67 +65,67 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		Role:     req.Role,
 	})
 	if err != nil {
-		response.Error(w, http.StatusBadRequest, err.Error())
+		response.Error(c, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	response.JSON(w, http.StatusCreated, result)
+	response.JSON(c, http.StatusCreated, result)
 }
 
-func (h *AuthHandler) GetProfile(w http.ResponseWriter, r *http.Request) {
-	userID := r.Context().Value("user_id").(string)
+func (h *AuthHandler) GetProfile(c *gin.Context) {
+	userID := c.GetString("user_id")
 
-	result, err := h.authUC.GetProfile(r.Context(), userID)
+	result, err := h.authUC.GetProfile(c.Request.Context(), userID)
 	if err != nil {
-		response.Error(w, http.StatusNotFound, err.Error())
+		response.Error(c, http.StatusNotFound, err.Error())
 		return
 	}
 
-	response.JSON(w, http.StatusOK, result)
+	response.JSON(c, http.StatusOK, result)
 }
 
-func (h *AuthHandler) ListUsers(w http.ResponseWriter, r *http.Request) {
+func (h *AuthHandler) ListUsers(c *gin.Context) {
 	page := 1
 	limit := 50
 
-	result, total, err := h.authUC.ListUsers(r.Context(), page, limit)
+	result, total, err := h.authUC.ListUsers(c.Request.Context(), page, limit)
 	if err != nil {
-		response.Error(w, http.StatusInternalServerError, err.Error())
+		response.Error(c, http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	response.JSONWithMeta(w, http.StatusOK, result, &response.Meta{
+	response.JSONWithMeta(c, http.StatusOK, result, &response.Meta{
 		Page:  page,
 		Limit: limit,
 		Total: total,
 	})
 }
 
-func (h *AuthHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
-	id := chi.URLParam(r, "id")
+func (h *AuthHandler) UpdateUser(c *gin.Context) {
+	id := c.Param("id")
 
 	var req dto.UpdateUserRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		response.Error(w, http.StatusBadRequest, "invalid request body")
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Error(c, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
-	result, err := h.authUC.UpdateUser(r.Context(), id, &req)
+	result, err := h.authUC.UpdateUser(c.Request.Context(), id, &req)
 	if err != nil {
-		response.Error(w, http.StatusBadRequest, err.Error())
+		response.Error(c, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	response.JSON(w, http.StatusOK, result)
+	response.JSON(c, http.StatusOK, result)
 }
 
-func (h *AuthHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
-	id := chi.URLParam(r, "id")
+func (h *AuthHandler) DeleteUser(c *gin.Context) {
+	id := c.Param("id")
 
-	if err := h.authUC.DeleteUser(r.Context(), id); err != nil {
-		response.Error(w, http.StatusBadRequest, err.Error())
+	if err := h.authUC.DeleteUser(c.Request.Context(), id); err != nil {
+		response.Error(c, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	response.JSON(w, http.StatusOK, map[string]string{"message": "user deactivated"})
+	response.JSON(c, http.StatusOK, gin.H{"message": "user deactivated"})
 }

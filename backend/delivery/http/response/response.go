@@ -1,16 +1,10 @@
 package response
 
 import (
-	"encoding/json"
 	"net/http"
-)
 
-type Response struct {
-	Success bool        `json:"success"`
-	Data    interface{} `json:"data,omitempty"`
-	Error   string      `json:"error,omitempty"`
-	Meta    *Meta       `json:"meta,omitempty"`
-}
+	"github.com/gin-gonic/gin"
+)
 
 type Meta struct {
 	Page  int `json:"page"`
@@ -18,30 +12,31 @@ type Meta struct {
 	Total int `json:"total"`
 }
 
-func JSON(w http.ResponseWriter, statusCode int, data interface{}) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(statusCode)
-	json.NewEncoder(w).Encode(Response{
-		Success: statusCode >= 200 && statusCode < 300,
-		Data:    data,
+func JSON(c *gin.Context, statusCode int, data interface{}) {
+	c.JSON(statusCode, gin.H{
+		"success": statusCode >= 200 && statusCode < 300,
+		"data":    data,
 	})
 }
 
-func JSONWithMeta(w http.ResponseWriter, statusCode int, data interface{}, meta *Meta) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(statusCode)
-	json.NewEncoder(w).Encode(Response{
-		Success: statusCode >= 200 && statusCode < 300,
-		Data:    data,
-		Meta:    meta,
+func JSONWithMeta(c *gin.Context, statusCode int, data interface{}, meta *Meta) {
+	c.JSON(statusCode, gin.H{
+		"success": statusCode >= 200 && statusCode < 300,
+		"data":    data,
+		"meta":    meta,
 	})
 }
 
-func Error(w http.ResponseWriter, statusCode int, message string) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(statusCode)
-	json.NewEncoder(w).Encode(Response{
-		Success: false,
-		Error:   message,
+func Error(c *gin.Context, statusCode int, message string) {
+	c.JSON(statusCode, gin.H{
+		"success": false,
+		"error":   message,
+	})
+}
+
+func Unauthorized(c *gin.Context, message string) {
+	c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+		"success": false,
+		"error":   message,
 	})
 }

@@ -4,6 +4,8 @@ import (
 	"net/http"
 
 	"wms/pkg/logger"
+
+	"github.com/gin-gonic/gin"
 )
 
 type RoleMiddleware struct {
@@ -14,37 +16,34 @@ func NewRoleMiddleware(log logger.Logger) *RoleMiddleware {
 	return &RoleMiddleware{log: log}
 }
 
-type roleEnforcer struct {
-	*RoleMiddleware
-	roles []string
-}
+func (m *RoleMiddleware) RequireRole(roles ...string) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		role, exists := c.Get("role")
+		if !exists {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+			return
+		}
 
-func (r *roleEnforcer) Middleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		role, ok := req.Context().Value("role").(string)
+		roleStr, ok := role.(string)
 		if !ok {
-			http.Error(w, `{"error":"unauthorized"}`, http.StatusUnauthorized)
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 			return
 		}
 
 		allowed := false
-		for _, allowedRole := range r.roles {
-			if role == allowedRole {
+		for _, allowedRole := range roles {
+			if roleStr == allowedRole {
 				allowed = true
 				break
 			}
 		}
 
 		if !allowed {
-			r.log.Warn("access denied", "required_roles", r.roles, "user_role", role)
-			http.Error(w, `{"error":"insufficient permissions"}`, http.StatusForbidden)
+			m.log.Warn("access denied", "required_roles", roles, "user_role", roleStr)
+			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "insufficient permissions"})
 			return
 		}
 
-		next.ServeHTTP(w, req)
-	})
-}
-
-func (m *RoleMiddleware) RequireRole(roles ...string) *roleEnforcer {
-	return &roleEnforcer{RoleMiddleware: m, roles: roles}
+		c.Next()
+	}
 }

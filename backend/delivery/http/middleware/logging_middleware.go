@@ -1,10 +1,11 @@
 package middleware
 
 import (
-	"net/http"
 	"time"
 
 	"wms/pkg/logger"
+
+	"github.com/gin-gonic/gin"
 )
 
 type LoggingMiddleware struct {
@@ -15,29 +16,18 @@ func NewLoggingMiddleware(log logger.Logger) *LoggingMiddleware {
 	return &LoggingMiddleware{log: log}
 }
 
-func (m *LoggingMiddleware) Handle(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+func (m *LoggingMiddleware) Handle() gin.HandlerFunc {
+	return func(c *gin.Context) {
 		start := time.Now()
 
-		wrapped := &responseWriter{ResponseWriter: w, statusCode: http.StatusOK}
-		next.ServeHTTP(wrapped, r)
+		c.Next()
 
 		m.log.Info("request",
-			"method", r.Method,
-			"path", r.URL.Path,
-			"status", wrapped.statusCode,
+			"method", c.Request.Method,
+			"path", c.Request.URL.Path,
+			"status", c.Writer.Status(),
 			"duration", time.Since(start).String(),
-			"remote_addr", r.RemoteAddr,
+			"remote_addr", c.ClientIP(),
 		)
-	})
-}
-
-type responseWriter struct {
-	http.ResponseWriter
-	statusCode int
-}
-
-func (rw *responseWriter) WriteHeader(code int) {
-	rw.statusCode = code
-	rw.ResponseWriter.WriteHeader(code)
+	}
 }

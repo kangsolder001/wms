@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"encoding/json"
 	"net/http"
 	"strconv"
 
@@ -10,7 +9,7 @@ import (
 	"wms/delivery/http/response"
 	"wms/pkg/logger"
 
-	"github.com/go-chi/chi/v5"
+	"github.com/gin-gonic/gin"
 )
 
 type OutboundHandler struct {
@@ -22,9 +21,9 @@ func NewOutboundHandler(outboundUC usecase.OutboundUsecase, log logger.Logger) *
 	return &OutboundHandler{outboundUC: outboundUC, log: log}
 }
 
-func (h *OutboundHandler) ListSalesOrders(w http.ResponseWriter, r *http.Request) {
-	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
-	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
+func (h *OutboundHandler) ListSalesOrders(c *gin.Context) {
+	page, _ := strconv.Atoi(c.Query("page"))
+	limit, _ := strconv.Atoi(c.Query("limit"))
 	if page < 1 {
 		page = 1
 	}
@@ -32,84 +31,84 @@ func (h *OutboundHandler) ListSalesOrders(w http.ResponseWriter, r *http.Request
 		limit = 10
 	}
 
-	sos, total, err := h.outboundUC.ListSalesOrders(r.Context(), page, limit)
+	sos, total, err := h.outboundUC.ListSalesOrders(c.Request.Context(), page, limit)
 	if err != nil {
-		response.Error(w, http.StatusInternalServerError, err.Error())
+		response.Error(c, http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	response.JSONWithMeta(w, http.StatusOK, sos, &response.Meta{
+	response.JSONWithMeta(c, http.StatusOK, sos, &response.Meta{
 		Page:  page,
 		Limit: limit,
 		Total: total,
 	})
 }
 
-func (h *OutboundHandler) GetSalesOrder(w http.ResponseWriter, r *http.Request) {
-	id := chi.URLParam(r, "id")
+func (h *OutboundHandler) GetSalesOrder(c *gin.Context) {
+	id := c.Param("id")
 
-	so, err := h.outboundUC.GetSalesOrder(r.Context(), id)
+	so, err := h.outboundUC.GetSalesOrder(c.Request.Context(), id)
 	if err != nil {
-		response.Error(w, http.StatusNotFound, err.Error())
+		response.Error(c, http.StatusNotFound, err.Error())
 		return
 	}
 
-	response.JSON(w, http.StatusOK, so)
+	response.JSON(c, http.StatusOK, so)
 }
 
-func (h *OutboundHandler) CreateSalesOrder(w http.ResponseWriter, r *http.Request) {
+func (h *OutboundHandler) CreateSalesOrder(c *gin.Context) {
 	var req dto.CreateSalesOrderRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		response.Error(w, http.StatusBadRequest, "invalid request body")
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Error(c, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
-	userID := r.Context().Value("user_id").(string)
+	userID := c.GetString("user_id")
 
-	so, err := h.outboundUC.CreateSalesOrder(r.Context(), &req, userID)
+	so, err := h.outboundUC.CreateSalesOrder(c.Request.Context(), &req, userID)
 	if err != nil {
-		response.Error(w, http.StatusBadRequest, err.Error())
+		response.Error(c, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	response.JSON(w, http.StatusCreated, so)
+	response.JSON(c, http.StatusCreated, so)
 }
 
-func (h *OutboundHandler) PickOrder(w http.ResponseWriter, r *http.Request) {
-	soID := chi.URLParam(r, "id")
+func (h *OutboundHandler) PickOrder(c *gin.Context) {
+	soID := c.Param("id")
 
 	var req dto.PickListRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		response.Error(w, http.StatusBadRequest, "invalid request body")
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Error(c, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
-	userID := r.Context().Value("user_id").(string)
+	userID := c.GetString("user_id")
 
-	if err := h.outboundUC.PickOrder(r.Context(), soID, &req, userID); err != nil {
-		response.Error(w, http.StatusBadRequest, err.Error())
+	if err := h.outboundUC.PickOrder(c.Request.Context(), soID, &req, userID); err != nil {
+		response.Error(c, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	response.JSON(w, http.StatusOK, map[string]string{"message": "order picked"})
+	response.JSON(c, http.StatusOK, gin.H{"message": "order picked"})
 }
 
-func (h *OutboundHandler) ShipOrder(w http.ResponseWriter, r *http.Request) {
-	soID := chi.URLParam(r, "id")
+func (h *OutboundHandler) ShipOrder(c *gin.Context) {
+	soID := c.Param("id")
 
 	var req dto.ShipRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		response.Error(w, http.StatusBadRequest, "invalid request body")
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Error(c, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
-	userID := r.Context().Value("user_id").(string)
+	userID := c.GetString("user_id")
 
-	shipment, err := h.outboundUC.ShipOrder(r.Context(), soID, &req, userID)
+	shipment, err := h.outboundUC.ShipOrder(c.Request.Context(), soID, &req, userID)
 	if err != nil {
-		response.Error(w, http.StatusBadRequest, err.Error())
+		response.Error(c, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	response.JSON(w, http.StatusCreated, shipment)
+	response.JSON(c, http.StatusCreated, shipment)
 }

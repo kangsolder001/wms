@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"encoding/json"
 	"net/http"
 	"strconv"
 
@@ -10,7 +9,7 @@ import (
 	"wms/delivery/http/response"
 	"wms/pkg/logger"
 
-	"github.com/go-chi/chi/v5"
+	"github.com/gin-gonic/gin"
 )
 
 type LocationHandler struct {
@@ -22,9 +21,9 @@ func NewLocationHandler(locationUC usecase.LocationUsecase, log logger.Logger) *
 	return &LocationHandler{locationUC: locationUC, log: log}
 }
 
-func (h *LocationHandler) List(w http.ResponseWriter, r *http.Request) {
-	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
-	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
+func (h *LocationHandler) List(c *gin.Context) {
+	page, _ := strconv.Atoi(c.Query("page"))
+	limit, _ := strconv.Atoi(c.Query("limit"))
 	if page < 1 {
 		page = 1
 	}
@@ -32,72 +31,72 @@ func (h *LocationHandler) List(w http.ResponseWriter, r *http.Request) {
 		limit = 10
 	}
 
-	locations, total, err := h.locationUC.ListLocations(r.Context(), page, limit)
+	locations, total, err := h.locationUC.ListLocations(c.Request.Context(), page, limit)
 	if err != nil {
-		response.Error(w, http.StatusInternalServerError, err.Error())
+		response.Error(c, http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	response.JSONWithMeta(w, http.StatusOK, locations, &response.Meta{
+	response.JSONWithMeta(c, http.StatusOK, locations, &response.Meta{
 		Page:  page,
 		Limit: limit,
 		Total: total,
 	})
 }
 
-func (h *LocationHandler) Get(w http.ResponseWriter, r *http.Request) {
-	id := chi.URLParam(r, "id")
+func (h *LocationHandler) Get(c *gin.Context) {
+	id := c.Param("id")
 
-	location, err := h.locationUC.GetLocation(r.Context(), id)
+	location, err := h.locationUC.GetLocation(c.Request.Context(), id)
 	if err != nil {
-		response.Error(w, http.StatusNotFound, err.Error())
+		response.Error(c, http.StatusNotFound, err.Error())
 		return
 	}
 
-	response.JSON(w, http.StatusOK, location)
+	response.JSON(c, http.StatusOK, location)
 }
 
-func (h *LocationHandler) Create(w http.ResponseWriter, r *http.Request) {
+func (h *LocationHandler) Create(c *gin.Context) {
 	var req dto.CreateLocationRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		response.Error(w, http.StatusBadRequest, "invalid request body")
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Error(c, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
-	location, err := h.locationUC.CreateLocation(r.Context(), &req)
+	location, err := h.locationUC.CreateLocation(c.Request.Context(), &req)
 	if err != nil {
-		response.Error(w, http.StatusBadRequest, err.Error())
+		response.Error(c, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	response.JSON(w, http.StatusCreated, location)
+	response.JSON(c, http.StatusCreated, location)
 }
 
-func (h *LocationHandler) Update(w http.ResponseWriter, r *http.Request) {
-	id := chi.URLParam(r, "id")
+func (h *LocationHandler) Update(c *gin.Context) {
+	id := c.Param("id")
 
 	var req dto.UpdateLocationRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		response.Error(w, http.StatusBadRequest, "invalid request body")
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Error(c, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
-	location, err := h.locationUC.UpdateLocation(r.Context(), id, &req)
+	location, err := h.locationUC.UpdateLocation(c.Request.Context(), id, &req)
 	if err != nil {
-		response.Error(w, http.StatusBadRequest, err.Error())
+		response.Error(c, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	response.JSON(w, http.StatusOK, location)
+	response.JSON(c, http.StatusOK, location)
 }
 
-func (h *LocationHandler) Delete(w http.ResponseWriter, r *http.Request) {
-	id := chi.URLParam(r, "id")
+func (h *LocationHandler) Delete(c *gin.Context) {
+	id := c.Param("id")
 
-	if err := h.locationUC.DeleteLocation(r.Context(), id); err != nil {
-		response.Error(w, http.StatusBadRequest, err.Error())
+	if err := h.locationUC.DeleteLocation(c.Request.Context(), id); err != nil {
+		response.Error(c, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	response.JSON(w, http.StatusOK, map[string]string{"message": "location deleted"})
+	response.JSON(c, http.StatusOK, gin.H{"message": "location deleted"})
 }

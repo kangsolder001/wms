@@ -6,6 +6,8 @@ import (
 	"wms/application/usecase"
 	"wms/delivery/http/response"
 	"wms/pkg/logger"
+
+	"github.com/gin-gonic/gin"
 )
 
 type DashboardHandler struct {
@@ -17,12 +19,12 @@ func NewDashboardHandler(dashboardUC usecase.DashboardUsecase, log logger.Logger
 	return &DashboardHandler{dashboardUC: dashboardUC, log: log}
 }
 
-func (h *DashboardHandler) GetSummary(w http.ResponseWriter, r *http.Request) {
-	summary, err := h.dashboardUC.GetSummary(r.Context())
+func (h *DashboardHandler) GetSummary(c *gin.Context) {
+	summary, err := h.dashboardUC.GetSummary(c.Request.Context())
 	if err != nil {
-		response.Error(w, http.StatusInternalServerError, err.Error())
+		response.Error(c, http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	response.JSON(w, http.StatusOK, summary)
+	response.JSON(c, http.StatusOK, summary)
 }

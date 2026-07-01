@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"encoding/json"
 	"net/http"
 	"strconv"
 
@@ -10,7 +9,7 @@ import (
 	"wms/delivery/http/response"
 	"wms/pkg/logger"
 
-	"github.com/go-chi/chi/v5"
+	"github.com/gin-gonic/gin"
 )
 
 type TransferHandler struct {
@@ -22,9 +21,9 @@ func NewTransferHandler(transferUC usecase.TransferUsecase, log logger.Logger) *
 	return &TransferHandler{transferUC: transferUC, log: log}
 }
 
-func (h *TransferHandler) List(w http.ResponseWriter, r *http.Request) {
-	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
-	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
+func (h *TransferHandler) List(c *gin.Context) {
+	page, _ := strconv.Atoi(c.Query("page"))
+	limit, _ := strconv.Atoi(c.Query("limit"))
 	if page < 1 {
 		page = 1
 	}
@@ -32,44 +31,44 @@ func (h *TransferHandler) List(w http.ResponseWriter, r *http.Request) {
 		limit = 10
 	}
 
-	transfers, total, err := h.transferUC.ListTransfers(r.Context(), page, limit)
+	transfers, total, err := h.transferUC.ListTransfers(c.Request.Context(), page, limit)
 	if err != nil {
-		response.Error(w, http.StatusInternalServerError, err.Error())
+		response.Error(c, http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	response.JSONWithMeta(w, http.StatusOK, transfers, &response.Meta{
+	response.JSONWithMeta(c, http.StatusOK, transfers, &response.Meta{
 		Page:  page,
 		Limit: limit,
 		Total: total,
 	})
 }
 
-func (h *TransferHandler) Create(w http.ResponseWriter, r *http.Request) {
+func (h *TransferHandler) Create(c *gin.Context) {
 	var req dto.CreateTransferRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		response.Error(w, http.StatusBadRequest, "invalid request body")
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Error(c, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
-	userID := r.Context().Value("user_id").(string)
+	userID := c.GetString("user_id")
 
-	transfer, err := h.transferUC.CreateTransfer(r.Context(), &req, userID)
+	transfer, err := h.transferUC.CreateTransfer(c.Request.Context(), &req, userID)
 	if err != nil {
-		response.Error(w, http.StatusBadRequest, err.Error())
+		response.Error(c, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	response.JSON(w, http.StatusCreated, transfer)
+	response.JSON(c, http.StatusCreated, transfer)
 }
 
-func (h *TransferHandler) Complete(w http.ResponseWriter, r *http.Request) {
-	id := chi.URLParam(r, "id")
+func (h *TransferHandler) Complete(c *gin.Context) {
+	id := c.Param("id")
 
-	if err := h.transferUC.CompleteTransfer(r.Context(), id); err != nil {
-		response.Error(w, http.StatusBadRequest, err.Error())
+	if err := h.transferUC.CompleteTransfer(c.Request.Context(), id); err != nil {
+		response.Error(c, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	response.JSON(w, http.StatusOK, map[string]string{"message": "transfer completed"})
+	response.JSON(c, http.StatusOK, gin.H{"message": "transfer completed"})
 }
