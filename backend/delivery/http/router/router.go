@@ -61,7 +61,7 @@ func NewRouter(
 		r.Group(func(r chi.Router) {
 			r.Use(authMiddleware.Handle)
 
-			r.Handle("/auth/register", withRole(roleMiddleware, adminRoles, authHandler.Register))
+			r.Handle("/auth/register", withRole(roleMiddleware, managerRoles, authHandler.Register))
 			r.Get("/auth/me", authHandler.GetProfile)
 
 			r.Route("/items", func(r chi.Router) {

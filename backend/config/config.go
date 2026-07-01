@@ -51,6 +51,10 @@ type CORSConfig struct {
 }
 
 func Load(path string) (*Config, error) {
+	if envPath := os.Getenv("CONFIG_FILE"); envPath != "" {
+		path = envPath
+	}
+
 	file, err := os.Open(path)
 	if err != nil {
 		return nil, err

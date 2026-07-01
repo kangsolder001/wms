@@ -7,7 +7,7 @@ services:
       POSTGRES_PASSWORD: wms_password
       POSTGRES_DB: wms_db
     ports:
-      - "5432:5432"
+      - "5434:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -15,6 +15,37 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+
+  backend:
+    build: ./backend
+    container_name: wms-backend
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=wms_user
+      - DB_PASSWORD=wms_password
+      - DB_NAME=wms_db
+      - JWT_SECRET=change-me-in-production
+      - CONFIG_FILE=/app/config.docker.json
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app
+      - /app/tmp
+
+  frontend:
+    build: ./frontend
+    container_name: wms-frontend
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
 
 volumes:
   postgres_data:

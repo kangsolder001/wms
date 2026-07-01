@@ -12,13 +12,14 @@ import {
   LogoutOutlined,
   MenuOutlined,
   SunOutlined,
+  UserAddOutlined,
 } from '@ant-design/icons';
 import { useAuthStore } from '../../stores/authStore';
 import { useThemeStore } from '../../stores/themeStore';
 
 const { Header, Sider, Content } = Layout;
 
-const menuItems = [
+const baseMenuItems = [
   { key: '/', icon: <DashboardOutlined />, label: 'Dashboard' },
   { key: '/items', icon: <ShoppingCartOutlined />, label: 'Items' },
   { key: '/locations', icon: <EnvironmentOutlined />, label: 'Locations' },
@@ -37,7 +38,13 @@ export default function MainLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const logout = useAuthStore((s) => s.logout);
+  const user = useAuthStore((s) => s.user);
   const { isDark, toggle: toggleTheme } = useThemeStore();
+
+  const menuItems = [
+    ...baseMenuItems,
+    ...((user?.role === 'admin' || user?.role === 'manager') ? [{ key: '/register', icon: <UserAddOutlined />, label: 'Register User' }] : []),
+  ];
 
   const handleLogout = () => {
     Modal.confirm({
