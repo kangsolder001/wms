@@ -35,10 +35,15 @@ export interface UserResponse {
   email: string;
   full_name: string;
   role: string;
+  is_active: boolean;
 }
 
 export const authApi = {
   login: (data: LoginRequest) => api.post<ApiResponse<LoginData>>('/auth/login', data),
   register: (data: RegisterRequest) => api.post<ApiResponse<UserResponse>>('/auth/register', data),
   getProfile: () => api.get<ApiResponse<UserResponse>>('/auth/me'),
+  listUsers: () => api.get<ApiResponse<UserResponse[]>>('/auth/users'),
+  updateUser: (id: string, data: Partial<RegisterRequest & { is_active: boolean }>) =>
+    api.put<ApiResponse<UserResponse>>(`/auth/users/${id}`, data),
+  deleteUser: (id: string) => api.delete<ApiResponse<{ message: string }>>(`/auth/users/${id}`),
 };

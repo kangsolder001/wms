@@ -9,16 +9,24 @@ interface AuthState {
   logout: () => void;
 }
 
+function loadUser(): UserResponse | null {
+  const raw = localStorage.getItem('user');
+  if (!raw) return null;
+  try { return JSON.parse(raw); } catch { return null; }
+}
+
 export const useAuthStore = create<AuthState>((set) => ({
   token: localStorage.getItem('token'),
-  user: null,
+  user: loadUser(),
   isAuthenticated: !!localStorage.getItem('token'),
   setAuth: (token, user) => {
     localStorage.setItem('token', token);
+    localStorage.setItem('user', JSON.stringify(user));
     set({ token, user, isAuthenticated: true });
   },
   logout: () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('user');
     set({ token: null, user: null, isAuthenticated: false });
   },
 }));

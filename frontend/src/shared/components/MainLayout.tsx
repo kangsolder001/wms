@@ -43,7 +43,7 @@ export default function MainLayout() {
 
   const menuItems = [
     ...baseMenuItems,
-    ...((user?.role === 'admin' || user?.role === 'manager') ? [{ key: '/register', icon: <UserAddOutlined />, label: 'Register User' }] : []),
+    ...((user?.role === 'admin' || user?.role === 'manager') ? [{ key: '/users', icon: <UserAddOutlined />, label: 'User Management' }] : []),
   ];
 
   const handleLogout = () => {

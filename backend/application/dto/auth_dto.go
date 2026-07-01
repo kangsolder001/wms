@@ -24,4 +24,13 @@ type UserResponse struct {
 	Email    string `json:"email"`
 	FullName string `json:"full_name"`
 	Role     string `json:"role"`
+	IsActive bool   `json:"is_active"`
+}
+
+type UpdateUserRequest struct {
+	Email    string `json:"email"`
+	FullName string `json:"full_name"`
+	Role     string `json:"role"`
+	Password string `json:"password,omitempty"`
+	IsActive *bool  `json:"is_active,omitempty"`
 }

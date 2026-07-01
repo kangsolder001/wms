@@ -68,7 +68,7 @@ func main() {
 	transferHandler := handler.NewTransferHandler(transferUC, appLogger)
 	dashboardHandler := handler.NewDashboardHandler(dashboardUC, appLogger)
 
-	authMiddleware := middleware.NewAuthMiddleware(jwtService, appLogger)
+	authMiddleware := middleware.NewAuthMiddleware(jwtService, db, appLogger)
 	roleMiddleware := middleware.NewRoleMiddleware(appLogger)
 	loggingMiddleware := middleware.NewLoggingMiddleware(appLogger)
 

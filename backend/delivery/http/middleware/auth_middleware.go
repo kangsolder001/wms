@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"context"
+	"database/sql"
 	"net/http"
 	"strings"
 
@@ -11,11 +12,12 @@ import (
 
 type AuthMiddleware struct {
 	jwtService auth.JWTService
+	db         *sql.DB
 	log        logger.Logger
 }
 
-func NewAuthMiddleware(jwtService auth.JWTService, log logger.Logger) *AuthMiddleware {
-	return &AuthMiddleware{jwtService: jwtService, log: log}
+func NewAuthMiddleware(jwtService auth.JWTService, db *sql.DB, log logger.Logger) *AuthMiddleware {
+	return &AuthMiddleware{jwtService: jwtService, db: db, log: log}
 }
 
 func (m *AuthMiddleware) Handle(next http.Handler) http.Handler {
@@ -42,6 +44,13 @@ func (m *AuthMiddleware) Handle(next http.Handler) http.Handler {
 		userID, ok := claims["user_id"].(string)
 		if !ok {
 			http.Error(w, `{"error":"invalid token claims"}`, http.StatusUnauthorized)
+			return
+		}
+
+		var isActive bool
+		err = m.db.QueryRowContext(r.Context(), "SELECT is_active FROM users WHERE id = $1", userID).Scan(&isActive)
+		if err != nil || !isActive {
+			http.Error(w, `{"error":"account is deactivated"}`, http.StatusUnauthorized)
 			return
 		}
 

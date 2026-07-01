@@ -18,6 +18,9 @@ type AuthUsecase interface {
 	Login(ctx context.Context, req *dto.LoginRequest) (*dto.LoginResponse, error)
 	Register(ctx context.Context, req *dto.RegisterRequest) (*dto.UserResponse, error)
 	GetProfile(ctx context.Context, userID string) (*dto.UserResponse, error)
+	ListUsers(ctx context.Context, page, limit int) ([]*dto.UserResponse, int, error)
+	UpdateUser(ctx context.Context, id string, req *dto.UpdateUserRequest) (*dto.UserResponse, error)
+	DeleteUser(ctx context.Context, id string) error
 }
 
 type authUsecase struct {
@@ -128,4 +131,81 @@ func (uc *authUsecase) GetProfile(ctx context.Context, userID string) (*dto.User
 		FullName: user.FullName,
 		Role:     user.Role,
 	}, nil
+}
+
+func (uc *authUsecase) ListUsers(ctx context.Context, page, limit int) ([]*dto.UserResponse, int, error) {
+	users, total, err := uc.userRepo.List(ctx, page, limit)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	var result []*dto.UserResponse
+	for _, u := range users {
+		result = append(result, &dto.UserResponse{
+			ID:       u.ID,
+			Username: u.Username,
+			Email:    u.Email,
+			FullName: u.FullName,
+			Role:     u.Role,
+			IsActive: u.IsActive,
+		})
+	}
+	return result, total, nil
+}
+
+func (uc *authUsecase) UpdateUser(ctx context.Context, id string, req *dto.UpdateUserRequest) (*dto.UserResponse, error) {
+	user, err := uc.userRepo.FindByID(ctx, id)
+	if err != nil {
+		return nil, errors.New("user not found")
+	}
+
+	if req.Email != "" {
+		existing, _ := uc.userRepo.FindByEmail(ctx, req.Email)
+		if existing != nil && existing.ID != id {
+			return nil, errors.New("email already exists")
+		}
+		user.Email = req.Email
+	}
+	if req.FullName != "" {
+		user.FullName = req.FullName
+	}
+	if req.Role != "" {
+		user.Role = req.Role
+	}
+	if req.Password != "" {
+		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+		if err != nil {
+			return nil, err
+		}
+		user.PasswordHash = string(hashedPassword)
+	}
+	if req.IsActive != nil {
+		user.IsActive = *req.IsActive
+	}
+	user.UpdatedAt = time.Now()
+
+	if err := uc.userRepo.Update(ctx, user); err != nil {
+		return nil, err
+	}
+
+	return &dto.UserResponse{
+		ID:       user.ID,
+		Username: user.Username,
+		Email:    user.Email,
+		FullName: user.FullName,
+		Role:     user.Role,
+		IsActive: user.IsActive,
+	}, nil
+}
+
+func (uc *authUsecase) DeleteUser(ctx context.Context, id string) error {
+	user, err := uc.userRepo.FindByID(ctx, id)
+	if err != nil {
+		return errors.New("user not found")
+	}
+
+	active := false
+	user.IsActive = active
+	user.UpdatedAt = time.Now()
+	return uc.userRepo.Update(ctx, user)
 }

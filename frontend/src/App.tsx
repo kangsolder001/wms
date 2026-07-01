@@ -4,7 +4,7 @@ import { ConfigProvider, theme } from 'antd';
 import { useAuthStore } from './stores/authStore';
 import { useThemeStore } from './stores/themeStore';
 import LoginPage from './features/auth/LoginPage';
-import RegisterPage from './features/auth/RegisterPage';
+import UsersPage from './features/auth/UsersPage';
 import DashboardPage from './features/dashboard/DashboardPage';
 import ItemsPage from './features/masterdata/ItemsPage';
 import LocationsPage from './features/location/LocationsPage';
@@ -156,7 +156,7 @@ function App() {
               <Route path="purchase-orders" element={<PurchaseOrdersPage />} />
               <Route path="sales-orders" element={<SalesOrdersPage />} />
               <Route path="transfers" element={<TransfersPage />} />
-              <Route path="register" element={<RegisterPage />} />
+              <Route path="users" element={<UsersPage />} />
             </Route>
           </Routes>
         </BrowserRouter>

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Form, Input, Button, Card, Typography, Select, message } from 'antd';
 import { UserOutlined, MailOutlined, LockOutlined, IdcardOutlined } from '@ant-design/icons';
-import { authApi, RegisterRequest } from '../../api/auth';
+import { authApi, type RegisterRequest } from '../../api/auth';
 
 const { Title } = Typography;
 

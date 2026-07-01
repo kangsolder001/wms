@@ -63,6 +63,9 @@ func NewRouter(
 
 			r.Handle("/auth/register", withRole(roleMiddleware, managerRoles, authHandler.Register))
 			r.Get("/auth/me", authHandler.GetProfile)
+			r.Get("/auth/users", withRole(roleMiddleware, managerRoles, authHandler.ListUsers))
+			r.Put("/auth/users/{id}", withRole(roleMiddleware, managerRoles, authHandler.UpdateUser))
+			r.Delete("/auth/users/{id}", withRole(roleMiddleware, managerRoles, authHandler.DeleteUser))
 
 			r.Route("/items", func(r chi.Router) {
 				r.Get("/", itemHandler.List)
