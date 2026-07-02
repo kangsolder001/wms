@@ -13,6 +13,7 @@
 - [x] Docker setup (dev + prod)
 - [x] Seed data (3 users, 10 items, 10 locations, 13 stock, 3 PO, 2 SO, 2 transfers)
 - [x] Frontend proxy Vite → backend Docker
+- [x] Migrate router: chi → gin-gonic/gin
 - [x] UsersPage: table with list, create, edit, deactivate, toggle status
 - [x] Backend: ListUsers, UpdateUser, DeleteUser endpoints
 

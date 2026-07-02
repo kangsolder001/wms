@@ -79,6 +79,8 @@ func (uc *inboundUsecase) CreatePurchaseOrder(ctx context.Context, req *dto.Crea
 		Status:       po.Status,
 		ExpectedDate: po.ExpectedDate,
 		Notes:        po.Notes,
+		CreatedBy:    po.CreatedBy,
+		CreatedByName: po.CreatedByName,
 		CreatedAt:    po.CreatedAt,
 	}, nil
 }
@@ -96,6 +98,8 @@ func (uc *inboundUsecase) GetPurchaseOrder(ctx context.Context, id string) (*dto
 		Status:       po.Status,
 		ExpectedDate: po.ExpectedDate,
 		Notes:        po.Notes,
+		CreatedBy:    po.CreatedBy,
+		CreatedByName: po.CreatedByName,
 		CreatedAt:    po.CreatedAt,
 	}, nil
 }
@@ -115,6 +119,8 @@ func (uc *inboundUsecase) ListPurchaseOrders(ctx context.Context, page, limit in
 			Status:       po.Status,
 			ExpectedDate: po.ExpectedDate,
 			Notes:        po.Notes,
+			CreatedBy:    po.CreatedBy,
+			CreatedByName: po.CreatedByName,
 			CreatedAt:    po.CreatedAt,
 		})
 	}

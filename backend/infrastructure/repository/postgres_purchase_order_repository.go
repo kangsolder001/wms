@@ -67,8 +67,11 @@ func (r *postgresPurchaseOrderRepository) List(ctx context.Context, page, limit 
 	}
 
 	rows, err := r.db.QueryContext(ctx,
-		`SELECT id, po_number, supplier_name, status, expected_date, notes, created_by, created_at, updated_at 
-		 FROM purchase_orders ORDER BY created_at DESC LIMIT $1 OFFSET $2`, limit, offset,
+		`SELECT po.id, po.po_number, po.supplier_name, po.status, po.expected_date, po.notes, 
+		        po.created_by, u.full_name, po.created_at, po.updated_at 
+		 FROM purchase_orders po
+		 LEFT JOIN users u ON po.created_by = u.id
+		 ORDER BY po.created_at DESC LIMIT $1 OFFSET $2`, limit, offset,
 	)
 	if err != nil {
 		return nil, 0, err
@@ -78,7 +81,7 @@ func (r *postgresPurchaseOrderRepository) List(ctx context.Context, page, limit 
 	var pos []*entity.PurchaseOrder
 	for rows.Next() {
 		po := &entity.PurchaseOrder{}
-		if err := rows.Scan(&po.ID, &po.PONumber, &po.SupplierName, &po.Status, &po.ExpectedDate, &po.Notes, &po.CreatedBy, &po.CreatedAt, &po.UpdatedAt); err != nil {
+		if err := rows.Scan(&po.ID, &po.PONumber, &po.SupplierName, &po.Status, &po.ExpectedDate, &po.Notes, &po.CreatedBy, &po.CreatedByName, &po.CreatedAt, &po.UpdatedAt); err != nil {
 			continue
 		}
 		pos = append(pos, po)

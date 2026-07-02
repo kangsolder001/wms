@@ -35,6 +35,8 @@ type PurchaseOrderResponse struct {
 	Status       string                    `json:"status"`
 	ExpectedDate *time.Time                `json:"expected_date,omitempty"`
 	Notes        string                    `json:"notes"`
+	CreatedBy    string                    `json:"created_by"`
+	CreatedByName string                   `json:"created_by_name,omitempty"`
 	CreatedAt    time.Time                 `json:"created_at"`
 	Items        []POItemResponse          `json:"items,omitempty"`
 }
