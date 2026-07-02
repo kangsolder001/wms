@@ -109,8 +109,8 @@ func (r *postgresStockRepository) List(ctx context.Context, page, limit int) ([]
 	}
 
 	rows, err := r.db.QueryContext(ctx,
-		`SELECT id, item_id, location_id, quantity, reserved_quantity, batch_number, expiry_date, updated_at 
-		 FROM stock WHERE quantity > 0 ORDER BY updated_at DESC LIMIT $1 OFFSET $2`, limit, offset,
+		`SELECT s.id, s.item_id, s.location_id, s.quantity, s.reserved_quantity, s.batch_number, s.expiry_date, s.updated_at 
+		 FROM stock s WHERE s.quantity > 0 ORDER BY s.updated_at DESC LIMIT $1 OFFSET $2`, limit, offset,
 	)
 	if err != nil {
 		return nil, 0, err
@@ -127,6 +127,55 @@ func (r *postgresStockRepository) List(ctx context.Context, page, limit int) ([]
 	}
 
 	return stocks, total, nil
+}
+
+func (r *postgresStockRepository) ListWithDetails(ctx context.Context, page, limit int) ([]map[string]interface{}, int, error) {
+	offset := (page - 1) * limit
+
+	var total int
+	err := r.db.QueryRowContext(ctx, "SELECT COUNT(*) FROM stock WHERE quantity > 0").Scan(&total)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	rows, err := r.db.QueryContext(ctx,
+		`SELECT s.id, s.item_id, s.location_id, s.quantity, s.reserved_quantity, s.batch_number,
+		        i.sku, i.name AS item_name, l.code AS location_code, l.name AS location_name
+		 FROM stock s
+		 LEFT JOIN items i ON s.item_id = i.id
+		 LEFT JOIN locations l ON s.location_id = l.id
+		 WHERE s.quantity > 0 ORDER BY s.updated_at DESC LIMIT $1 OFFSET $2`, limit, offset,
+	)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer rows.Close()
+
+	var results []map[string]interface{}
+	for rows.Next() {
+		var id, itemID, locationID string
+		var quantity, reservedQuantity float64
+		var batchNumber, itemSKU, itemName, locationCode, locationName string
+		var expiryDate sql.NullTime
+
+		if err := rows.Scan(&id, &itemID, &locationID, &quantity, &reservedQuantity, &batchNumber, &expiryDate, &itemSKU, &itemName, &locationCode, &locationName); err != nil {
+			continue
+		}
+		results = append(results, map[string]interface{}{
+			"id":                id,
+			"item_id":           itemID,
+			"location_id":       locationID,
+			"quantity":          quantity,
+			"reserved_quantity": reservedQuantity,
+			"batch_number":      batchNumber,
+			"item_sku":          itemSKU,
+			"item_name":         itemName,
+			"location_code":     locationCode,
+			"location_name":     locationName,
+		})
+	}
+
+	return results, total, nil
 }
 
 func (r *postgresStockRepository) GetTotalStockByItem(ctx context.Context, itemID string) (float64, error) {

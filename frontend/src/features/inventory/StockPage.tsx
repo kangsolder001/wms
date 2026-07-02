@@ -1,6 +1,7 @@
 import { Table, Typography } from 'antd';
 import { useQuery } from '@tanstack/react-query';
-import { stockApi } from '../../api/stock';
+import { stockApi, type Stock } from '../../api/stock';
+import type { ColumnsType } from 'antd/es/table';
 
 export default function StockPage() {
   const { data, isLoading } = useQuery({
@@ -8,12 +9,13 @@ export default function StockPage() {
     queryFn: () => stockApi.list().then((res) => res.data),
   });
 
-  const columns = [
-    { title: 'Item ID', dataIndex: 'item_id', key: 'item_id' },
-    { title: 'Location ID', dataIndex: 'location_id', key: 'location_id', responsive: ['md' as const] },
+  const columns: ColumnsType<Stock> = [
+    { title: 'SKU', dataIndex: 'item_sku', key: 'item_sku' },
+    { title: 'Item', dataIndex: 'item_name', key: 'item_name' },
+    { title: 'Location', dataIndex: 'location_code', key: 'location_code', responsive: ['md'] },
     { title: 'Quantity', dataIndex: 'quantity', key: 'quantity' },
-    { title: 'Reserved', dataIndex: 'reserved_quantity', key: 'reserved_quantity', responsive: ['md' as const] },
-    { title: 'Batch', dataIndex: 'batch_number', key: 'batch_number', responsive: ['lg' as const] },
+    { title: 'Reserved', dataIndex: 'reserved_quantity', key: 'reserved_quantity', responsive: ['md'] },
+    { title: 'Batch', dataIndex: 'batch_number', key: 'batch_number', responsive: ['lg'] },
   ];
 
   return (

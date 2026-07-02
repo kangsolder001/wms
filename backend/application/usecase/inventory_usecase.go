@@ -36,25 +36,28 @@ func NewInventoryUsecase(
 }
 
 func (uc *inventoryUsecase) GetStock(ctx context.Context, page, limit int) ([]*dto.StockResponse, int, error) {
-	stocks, total, err := uc.stockRepo.List(ctx, page, limit)
+	results, total, err := uc.stockRepo.ListWithDetails(ctx, page, limit)
 	if err != nil {
 		uc.log.Error("failed to list stock", "error", err)
 		return nil, 0, err
 	}
 
-	var result []*dto.StockResponse
-	for _, s := range stocks {
-		result = append(result, &dto.StockResponse{
-			ID:               s.ID,
-			ItemID:           s.ItemID,
-			LocationID:       s.LocationID,
-			Quantity:         s.Quantity,
-			ReservedQuantity: s.ReservedQuantity,
-			BatchNumber:      s.BatchNumber,
+	var stockList []*dto.StockResponse
+	for _, r := range results {
+		stockList = append(stockList, &dto.StockResponse{
+			ID:               r["id"].(string),
+			ItemID:           r["item_id"].(string),
+			LocationID:       r["location_id"].(string),
+			Quantity:         r["quantity"].(float64),
+			ReservedQuantity: r["reserved_quantity"].(float64),
+			BatchNumber:      r["batch_number"].(string),
+			ItemSKU:          r["item_sku"].(string),
+			ItemName:         r["item_name"].(string),
+			LocationCode:     r["location_code"].(string),
 		})
 	}
 
-	return result, total, nil
+	return stockList, total, nil
 }
 
 func (uc *inventoryUsecase) GetStockByItem(ctx context.Context, itemID string) ([]*dto.StockResponse, error) {
