@@ -156,9 +156,8 @@ func (r *postgresStockRepository) ListWithDetails(ctx context.Context, page, lim
 		var id, itemID, locationID string
 		var quantity, reservedQuantity float64
 		var batchNumber, itemSKU, itemName, locationCode, locationName string
-		var expiryDate sql.NullTime
 
-		if err := rows.Scan(&id, &itemID, &locationID, &quantity, &reservedQuantity, &batchNumber, &expiryDate, &itemSKU, &itemName, &locationCode, &locationName); err != nil {
+		if err := rows.Scan(&id, &itemID, &locationID, &quantity, &reservedQuantity, &batchNumber, &itemSKU, &itemName, &locationCode, &locationName); err != nil {
 			continue
 		}
 		results = append(results, map[string]interface{}{
