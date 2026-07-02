@@ -105,3 +105,25 @@ func (r *postgresPurchaseOrderRepository) UpdateReceivedQuantity(ctx context.Con
 	)
 	return err
 }
+
+func (r *postgresPurchaseOrderRepository) FindItemsByPOID(ctx context.Context, poID string) ([]*entity.PurchaseOrderItem, error) {
+	rows, err := r.db.QueryContext(ctx,
+		`SELECT id, po_id, item_id, expected_quantity, received_quantity, unit_price 
+		 FROM purchase_order_items WHERE po_id = $1`, poID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var items []*entity.PurchaseOrderItem
+	for rows.Next() {
+		item := &entity.PurchaseOrderItem{}
+		if err := rows.Scan(&item.ID, &item.POID, &item.ItemID, &item.ExpectedQuantity, &item.ReceivedQuantity, &item.UnitPrice); err != nil {
+			continue
+		}
+		items = append(items, item)
+	}
+
+	return items, nil
+}

@@ -13,6 +13,7 @@ type PurchaseOrderRepository interface {
 	UpdateStatus(ctx context.Context, id, status string) error
 	List(ctx context.Context, page, limit int) ([]*entity.PurchaseOrder, int, error)
 	CreateItem(ctx context.Context, item *entity.PurchaseOrderItem) error
+	FindItemsByPOID(ctx context.Context, poID string) ([]*entity.PurchaseOrderItem, error)
 	UpdateReceivedQuantity(ctx context.Context, id string, receivedQty float64) error
 }
 

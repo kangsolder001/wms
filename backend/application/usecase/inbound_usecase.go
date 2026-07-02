@@ -123,6 +123,17 @@ func (uc *inboundUsecase) ListPurchaseOrders(ctx context.Context, page, limit in
 
 	var result []*dto.PurchaseOrderResponse
 	for _, po := range pos {
+		items, _ := uc.poRepo.FindItemsByPOID(ctx, po.ID)
+		var poItems []dto.POItemResponse
+		for _, item := range items {
+			poItems = append(poItems, dto.POItemResponse{
+				ID:               item.ID,
+				ItemID:           item.ItemID,
+				ExpectedQuantity: item.ExpectedQuantity,
+				ReceivedQuantity: item.ReceivedQuantity,
+				UnitPrice:        item.UnitPrice,
+			})
+		}
 		result = append(result, &dto.PurchaseOrderResponse{
 			ID:           po.ID,
 			PONumber:     po.PONumber,
@@ -133,6 +144,7 @@ func (uc *inboundUsecase) ListPurchaseOrders(ctx context.Context, page, limit in
 			CreatedBy:    po.CreatedBy,
 			CreatedByName: po.CreatedByName,
 			CreatedAt:    po.CreatedAt,
+			Items:        poItems,
 		})
 	}
 
