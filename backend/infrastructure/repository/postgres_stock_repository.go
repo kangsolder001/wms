@@ -129,23 +129,45 @@ func (r *postgresStockRepository) List(ctx context.Context, page, limit int) ([]
 	return stocks, total, nil
 }
 
-func (r *postgresStockRepository) ListWithDetails(ctx context.Context, page, limit int) ([]map[string]interface{}, int, error) {
+func (r *postgresStockRepository) ListWithDetails(ctx context.Context, page, limit int, itemID, locationID, search string) ([]map[string]interface{}, int, error) {
 	offset := (page - 1) * limit
 
+	where := "WHERE s.quantity > 0"
+	args := []interface{}{}
+	argIdx := 1
+
+	if itemID != "" {
+		where += fmt.Sprintf(" AND s.item_id = $%d", argIdx)
+		args = append(args, itemID)
+		argIdx++
+	}
+	if locationID != "" {
+		where += fmt.Sprintf(" AND s.location_id = $%d", argIdx)
+		args = append(args, locationID)
+		argIdx++
+	}
+	if search != "" {
+		where += fmt.Sprintf(" AND (i.name ILIKE $%d OR i.sku ILIKE $%d OR l.code ILIKE $%d)", argIdx, argIdx, argIdx)
+		args = append(args, "%"+search+"%")
+		argIdx++
+	}
+
 	var total int
-	err := r.db.QueryRowContext(ctx, "SELECT COUNT(*) FROM stock WHERE quantity > 0").Scan(&total)
+	countQuery := fmt.Sprintf("SELECT COUNT(*) FROM stock s LEFT JOIN items i ON s.item_id = i.id LEFT JOIN locations l ON s.location_id = l.id %s", where)
+	err := r.db.QueryRowContext(ctx, countQuery, args...).Scan(&total)
 	if err != nil {
 		return nil, 0, err
 	}
 
-	rows, err := r.db.QueryContext(ctx,
-		`SELECT s.id, s.item_id, s.location_id, s.quantity, s.reserved_quantity, s.batch_number,
-		        i.sku, i.name AS item_name, l.code AS location_code, l.name AS location_name
-		 FROM stock s
-		 LEFT JOIN items i ON s.item_id = i.id
-		 LEFT JOIN locations l ON s.location_id = l.id
-		 WHERE s.quantity > 0 ORDER BY s.updated_at DESC LIMIT $1 OFFSET $2`, limit, offset,
-	)
+	query := fmt.Sprintf(`SELECT s.id, s.item_id, s.location_id, s.quantity, s.reserved_quantity, s.batch_number,
+	        i.sku, i.name AS item_name, l.code AS location_code, l.name AS location_name
+	 FROM stock s
+	 LEFT JOIN items i ON s.item_id = i.id
+	 LEFT JOIN locations l ON s.location_id = l.id
+	 %s ORDER BY s.updated_at DESC LIMIT $%d OFFSET $%d`, where, argIdx, argIdx+1)
+	args = append(args, limit, offset)
+
+	rows, err := r.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -153,17 +175,17 @@ func (r *postgresStockRepository) ListWithDetails(ctx context.Context, page, lim
 
 	var results []map[string]interface{}
 	for rows.Next() {
-		var id, itemID, locationID string
+		var id, itemIDVal, locationIDVal string
 		var quantity, reservedQuantity float64
 		var batchNumber, itemSKU, itemName, locationCode, locationName string
 
-		if err := rows.Scan(&id, &itemID, &locationID, &quantity, &reservedQuantity, &batchNumber, &itemSKU, &itemName, &locationCode, &locationName); err != nil {
+		if err := rows.Scan(&id, &itemIDVal, &locationIDVal, &quantity, &reservedQuantity, &batchNumber, &itemSKU, &itemName, &locationCode, &locationName); err != nil {
 			continue
 		}
 		results = append(results, map[string]interface{}{
 			"id":                id,
-			"item_id":           itemID,
-			"location_id":       locationID,
+			"item_id":           itemIDVal,
+			"location_id":       locationIDVal,
 			"quantity":          quantity,
 			"reserved_quantity": reservedQuantity,
 			"batch_number":      batchNumber,

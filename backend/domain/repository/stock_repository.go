@@ -15,7 +15,7 @@ type StockRepository interface {
 	Reserve(ctx context.Context, itemID, locationID string, quantity float64) error
 	Release(ctx context.Context, itemID, locationID string, quantity float64) error
 	List(ctx context.Context, page, limit int) ([]*entity.Stock, int, error)
-	ListWithDetails(ctx context.Context, page, limit int) ([]map[string]interface{}, int, error)
+	ListWithDetails(ctx context.Context, page, limit int, itemID, locationID, search string) ([]map[string]interface{}, int, error)
 	GetTotalStockByItem(ctx context.Context, itemID string) (float64, error)
 }
 

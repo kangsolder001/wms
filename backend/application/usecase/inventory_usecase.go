@@ -11,7 +11,7 @@ import (
 )
 
 type InventoryUsecase interface {
-	GetStock(ctx context.Context, page, limit int) ([]*dto.StockResponse, int, error)
+	GetStock(ctx context.Context, page, limit int, itemID, locationID, search string) ([]*dto.StockResponse, int, error)
 	GetStockByItem(ctx context.Context, itemID string) ([]*dto.StockResponse, error)
 	AdjustStock(ctx context.Context, req *dto.AdjustStockRequest, userID string) error
 	GetStockMovements(ctx context.Context, page, limit int) ([]*dto.StockMovementResponse, int, error)
@@ -35,8 +35,8 @@ func NewInventoryUsecase(
 	}
 }
 
-func (uc *inventoryUsecase) GetStock(ctx context.Context, page, limit int) ([]*dto.StockResponse, int, error) {
-	results, total, err := uc.stockRepo.ListWithDetails(ctx, page, limit)
+func (uc *inventoryUsecase) GetStock(ctx context.Context, page, limit int, itemID, locationID, search string) ([]*dto.StockResponse, int, error) {
+	results, total, err := uc.stockRepo.ListWithDetails(ctx, page, limit, itemID, locationID, search)
 	if err != nil {
 		uc.log.Error("failed to list stock", "error", err)
 		return nil, 0, err

@@ -33,8 +33,13 @@ export interface StockMovement {
 }
 
 export const stockApi = {
-  list: (page = 1, limit = 10) =>
-    api.get('/stock', { params: { page, limit } }),
+  list: (page = 1, limit = 10, itemId?: string, locationId?: string, search?: string) => {
+    const params: any = { page, limit };
+    if (itemId) params.item_id = itemId;
+    if (locationId) params.location_id = locationId;
+    if (search) params.search = search;
+    return api.get('/stock', { params });
+  },
   getByItem: (itemId: string) =>
     api.get<Stock[]>('/stock', { params: { item_id: itemId } }),
   adjust: (data: AdjustStockRequest) => api.post('/stock/adjust', data),

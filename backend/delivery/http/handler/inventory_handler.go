@@ -31,7 +31,11 @@ func (h *InventoryHandler) ListStock(c *gin.Context) {
 		limit = 10
 	}
 
-	stocks, total, err := h.inventoryUC.GetStock(c.Request.Context(), page, limit)
+	itemID := c.Query("item_id")
+	locationID := c.Query("location_id")
+	search := c.Query("search")
+
+	stocks, total, err := h.inventoryUC.GetStock(c.Request.Context(), page, limit, itemID, locationID, search)
 	if err != nil {
 		response.Error(c, http.StatusInternalServerError, err.Error())
 		return
