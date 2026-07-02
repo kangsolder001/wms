@@ -141,14 +141,12 @@ export default function PurchaseOrdersPage() {
     const items = values.items?.map((item: any) => ({
       item_id: item.item_id,
       quantity: item.quantity,
-      batch_number: item.batch_number || '',
       location_id: item.location_id,
     })) || [];
 
     receiveMutation.mutate({
       id: selectedPO.id,
       data: {
-        grn_number: values.grn_number,
         notes: values.notes,
         items,
       },
@@ -273,9 +271,6 @@ export default function PurchaseOrdersPage() {
             </Descriptions>
 
             <Form form={receiveForm} layout="vertical" onFinish={handleReceiveSubmit}>
-              <Form.Item name="grn_number" label="GRN Number" rules={[{ required: true }]}>
-                <Input placeholder="e.g. GRN-20250715-001" />
-              </Form.Item>
               <Form.Item name="notes" label="Notes">
                 <Input.TextArea rows={2} />
               </Form.Item>
@@ -301,12 +296,6 @@ export default function PurchaseOrdersPage() {
                           style={{ marginBottom: 0, minWidth: 100 }}
                         >
                           <InputNumber min={1} placeholder="Qty" />
-                        </Form.Item>
-                        <Form.Item
-                          name={[name, 'batch_number']}
-                          style={{ marginBottom: 0, minWidth: 120 }}
-                        >
-                          <Input placeholder="Batch No" />
                         </Form.Item>
                         <Form.Item
                           name={[name, 'location_id']}

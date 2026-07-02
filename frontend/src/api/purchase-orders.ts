@@ -44,7 +44,6 @@ export interface PaginatedResponse<T> {
 }
 
 export interface ReceiveGoodsRequest {
-  grn_number: string;
   notes?: string;
   items: ReceiveItemRequest[];
 }
@@ -52,7 +51,6 @@ export interface ReceiveGoodsRequest {
 export interface ReceiveItemRequest {
   item_id: string;
   quantity: number;
-  batch_number?: string;
   location_id: string;
 }
 

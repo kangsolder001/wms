@@ -1,8 +1,10 @@
 package handler
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 
 	"wms/application/dto"
 	"wms/application/usecase"
@@ -77,15 +79,41 @@ func (h *InboundHandler) CreatePurchaseOrder(c *gin.Context) {
 func (h *InboundHandler) ReceiveGoods(c *gin.Context) {
 	poID := c.Param("id")
 
-	var req dto.ReceiveGoodsRequest
+	var req struct {
+		Notes string `json:"notes"`
+		Items []struct {
+			ItemID     string  `json:"item_id"`
+			Quantity   float64 `json:"quantity"`
+			LocationID string  `json:"location_id"`
+		} `json:"items"`
+	}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.Error(c, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
+	if len(req.Items) == 0 {
+		response.Error(c, http.StatusBadRequest, "items is required")
+		return
+	}
+
 	userID := c.GetString("user_id")
 
-	grn, err := h.inboundUC.ReceiveGoods(c.Request.Context(), poID, &req, userID)
+	grnNumber := fmt.Sprintf("GRN-%s", time.Now().Format("20060102150405"))
+
+	receiveReq := &dto.ReceiveGoodsRequest{
+		GRNNumber: grnNumber,
+		Notes:     req.Notes,
+	}
+	for _, item := range req.Items {
+		receiveReq.Items = append(receiveReq.Items, dto.ReceiveItemRequest{
+			ItemID:     item.ItemID,
+			Quantity:   item.Quantity,
+			LocationID: item.LocationID,
+		})
+	}
+
+	grn, err := h.inboundUC.ReceiveGoods(c.Request.Context(), poID, receiveReq, userID)
 	if err != nil {
 		response.Error(c, http.StatusBadRequest, err.Error())
 		return
