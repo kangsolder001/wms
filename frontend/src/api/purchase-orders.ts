@@ -43,9 +43,24 @@ export interface PaginatedResponse<T> {
   };
 }
 
+export interface ReceiveGoodsRequest {
+  grn_number: string;
+  notes?: string;
+  items: ReceiveItemRequest[];
+}
+
+export interface ReceiveItemRequest {
+  item_id: string;
+  quantity: number;
+  batch_number?: string;
+  location_id: string;
+}
+
 export const poApi = {
   list: (page = 1, limit = 10) =>
     api.get<PaginatedResponse<PurchaseOrder>>('/purchase-orders', { params: { page, limit } }),
   get: (id: string) => api.get<PurchaseOrder>(`/purchase-orders/${id}`),
   create: (data: CreatePORequest) => api.post<PurchaseOrder>('/purchase-orders', data),
+  receive: (id: string, data: ReceiveGoodsRequest) =>
+    api.post(`/purchase-orders/${id}/receive`, data),
 };
