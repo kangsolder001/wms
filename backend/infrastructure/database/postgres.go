@@ -107,8 +107,9 @@ func Migrate(db *sql.DB) error {
 			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 			po_number VARCHAR(50) UNIQUE NOT NULL,
 			supplier_name VARCHAR(255),
-			status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending','partial','received','cancelled')),
+			status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending','approved','received','cancelled')),
 			expected_date DATE,
+			storage_location_id UUID REFERENCES locations(id),
 			notes TEXT,
 			created_by UUID REFERENCES users(id),
 			created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -190,6 +191,19 @@ func Migrate(db *sql.DB) error {
 		if _, err := db.Exec(m); err != nil {
 			return fmt.Errorf("migration %d failed: %w", i+1, err)
 		}
+	}
+
+	// ALTER TABLE for existing databases
+	alterations := []string{
+		`DO $$ BEGIN
+			IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'purchase_orders' AND column_name = 'storage_location_id') THEN
+				ALTER TABLE purchase_orders ADD COLUMN storage_location_id UUID REFERENCES locations(id);
+			END IF;
+		END $$`,
+	}
+
+	for _, a := range alterations {
+		db.Exec(a)
 	}
 
 	return nil

@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { Table, Button, Modal, Form, Input, InputNumber, Select, Space, Typography, message, Tag, Descriptions } from 'antd';
-import { PlusOutlined, DeleteOutlined, InboxOutlined } from '@ant-design/icons';
+import { Table, Button, Modal, Form, Input, InputNumber, Select, Space, Typography, message, Tag } from 'antd';
+import { PlusOutlined, DeleteOutlined, InboxOutlined, CheckOutlined } from '@ant-design/icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { poApi, type PurchaseOrder, type CreatePORequest, type ReceiveGoodsRequest } from '../../api/purchase-orders';
 import { itemApi, type Item } from '../../api/items';
@@ -9,7 +9,7 @@ import type { ColumnsType } from 'antd/es/table';
 
 const statusColors: Record<string, string> = {
   pending: 'orange',
-  partial: 'blue',
+  approved: 'blue',
   received: 'green',
   cancelled: 'red',
 };
@@ -55,6 +55,15 @@ export default function PurchaseOrdersPage() {
     onError: (error: any) => message.error(error.response?.data?.error || 'Failed to create PO'),
   });
 
+  const approveMutation = useMutation({
+    mutationFn: (id: string) => poApi.approve(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['purchase-orders'] });
+      message.success('Purchase Order approved');
+    },
+    onError: (error: any) => message.error(error.response?.data?.error || 'Failed to approve PO'),
+  });
+
   const receiveMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: ReceiveGoodsRequest }) => poApi.receive(id, data),
     onSuccess: () => {
@@ -76,22 +85,33 @@ export default function PurchaseOrdersPage() {
       key: 'status',
       render: (status: string) => <Tag color={statusColors[status]}>{status.toUpperCase()}</Tag>,
     },
+    { title: 'Storage', dataIndex: 'storage_location_code', key: 'storage_location_code', responsive: ['lg'] },
     { title: 'Created By', dataIndex: 'created_by_name', key: 'created_by_name', responsive: ['lg'] },
     {
       title: 'Expected Date',
       dataIndex: 'expected_date',
       key: 'expected_date',
-      responsive: ['lg'],
+      responsive: ['xl'],
       render: (date: string) => date ? new Date(date).toLocaleDateString() : '-',
     },
     {
       title: 'Actions',
       key: 'actions',
       fixed: 'right',
-      width: 120,
+      width: 180,
       render: (_: any, record: PurchaseOrder) => (
         <Space>
           {record.status === 'pending' && (
+            <Button
+              type="primary"
+              size="small"
+              icon={<CheckOutlined />}
+              onClick={() => approveMutation.mutate(record.id)}
+            >
+              Approve
+            </Button>
+          )}
+          {record.status === 'approved' && (
             <Button
               type="primary"
               size="small"
@@ -100,13 +120,11 @@ export default function PurchaseOrdersPage() {
                 setSelectedPO(record);
                 setIsReceiveModalOpen(true);
                 receiveForm.resetFields();
-                // Pre-fill items from PO
                 if (record.items && record.items.length > 0) {
                   const receiveItems = record.items.map((item) => ({
                     item_id: item.item_id,
                     quantity: item.expected_quantity,
-                    batch_number: '',
-                    location_id: undefined,
+                    location_id: record.storage_location_id || undefined,
                   }));
                   receiveForm.setFieldsValue({ items: receiveItems });
                 }
@@ -130,6 +148,7 @@ export default function PurchaseOrdersPage() {
     createMutation.mutate({
       supplier_name: values.supplier_name,
       expected_date: values.expected_date,
+      storage_location_id: values.storage_location_id,
       notes: values.notes,
       items,
     });
@@ -191,6 +210,15 @@ export default function PurchaseOrdersPage() {
           </Form.Item>
           <Form.Item name="expected_date" label="Expected Date">
             <Input type="date" />
+          </Form.Item>
+          <Form.Item name="storage_location_id" label="Storage Location (Rack)" rules={[{ required: true }]}>
+            <Select placeholder="Select storage location" showSearch optionFilterProp="label">
+              {locationsData?.data?.filter((loc: Location) => loc.type === 'storage').map((loc: Location) => (
+                <Select.Option key={loc.id} value={loc.id} label={`${loc.code} - ${loc.name}`}>
+                  {loc.code} - {loc.name}
+                </Select.Option>
+              ))}
+            </Select>
           </Form.Item>
           <Form.Item name="notes" label="Notes">
             <Input.TextArea rows={2} />
@@ -260,16 +288,6 @@ export default function PurchaseOrdersPage() {
       >
         {selectedPO && (
           <>
-            <Descriptions bordered size="small" style={{ marginBottom: 16 }}>
-              <Descriptions.Item label="Supplier">{selectedPO.supplier_name}</Descriptions.Item>
-              <Descriptions.Item label="Expected Date">
-                {selectedPO.expected_date ? new Date(selectedPO.expected_date).toLocaleDateString() : '-'}
-              </Descriptions.Item>
-              <Descriptions.Item label="Status">
-                <Tag color={statusColors[selectedPO.status]}>{selectedPO.status.toUpperCase()}</Tag>
-              </Descriptions.Item>
-            </Descriptions>
-
             <Form form={receiveForm} layout="vertical" onFinish={handleReceiveSubmit}>
               <Form.Item name="notes" label="Notes">
                 <Input.TextArea rows={2} />

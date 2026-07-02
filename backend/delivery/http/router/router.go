@@ -88,6 +88,7 @@ func NewRouter(
 				po.GET("", inboundHandler.ListPurchaseOrders)
 				po.POST("", roleMiddleware.RequireRole(managerRoles...), inboundHandler.CreatePurchaseOrder)
 				po.GET("/:id", inboundHandler.GetPurchaseOrder)
+				po.POST("/:id/approve", roleMiddleware.RequireRole(managerRoles...), inboundHandler.ApprovePurchaseOrder)
 				po.POST("/:id/receive", roleMiddleware.RequireRole(operatorRoles...), inboundHandler.ReceiveGoods)
 			}
 

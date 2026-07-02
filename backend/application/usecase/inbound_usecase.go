@@ -16,6 +16,7 @@ type InboundUsecase interface {
 	GetPurchaseOrder(ctx context.Context, id string) (*dto.PurchaseOrderResponse, error)
 	ListPurchaseOrders(ctx context.Context, page, limit int) ([]*dto.PurchaseOrderResponse, int, error)
 	ReceiveGoods(ctx context.Context, poID string, req *dto.ReceiveGoodsRequest, userID string) (*dto.GoodsReceiptResponse, error)
+	ApprovePurchaseOrder(ctx context.Context, id string) error
 }
 
 type inboundUsecase struct {
@@ -54,14 +55,15 @@ func (uc *inboundUsecase) CreatePurchaseOrder(ctx context.Context, req *dto.Crea
 	}
 
 	po := &entity.PurchaseOrder{
-		PONumber:     fmt.Sprintf("PO-%s", time.Now().Format("20060102150405")),
-		SupplierName: req.SupplierName,
-		Status:       "pending",
-		ExpectedDate: expectedDate,
-		Notes:        req.Notes,
-		CreatedBy:    userID,
-		CreatedAt:    time.Now(),
-		UpdatedAt:    time.Now(),
+		PONumber:          fmt.Sprintf("PO-%s", time.Now().Format("20060102150405")),
+		SupplierName:      req.SupplierName,
+		Status:            "pending",
+		ExpectedDate:      expectedDate,
+		StorageLocationID: req.StorageLocationID,
+		Notes:             req.Notes,
+		CreatedBy:         userID,
+		CreatedAt:         time.Now(),
+		UpdatedAt:         time.Now(),
 	}
 
 	if err := uc.poRepo.Create(ctx, po); err != nil {
@@ -84,15 +86,16 @@ func (uc *inboundUsecase) CreatePurchaseOrder(ctx context.Context, req *dto.Crea
 	uc.log.Info("purchase order created", "id", po.ID, "po_number", po.PONumber)
 
 	return &dto.PurchaseOrderResponse{
-		ID:           po.ID,
-		PONumber:     po.PONumber,
-		SupplierName: po.SupplierName,
-		Status:       po.Status,
-		ExpectedDate: po.ExpectedDate,
-		Notes:        po.Notes,
-		CreatedBy:    po.CreatedBy,
-		CreatedByName: po.CreatedByName,
-		CreatedAt:    po.CreatedAt,
+		ID:                po.ID,
+		PONumber:          po.PONumber,
+		SupplierName:      po.SupplierName,
+		Status:            po.Status,
+		ExpectedDate:      po.ExpectedDate,
+		StorageLocationID: po.StorageLocationID,
+		Notes:             po.Notes,
+		CreatedBy:         po.CreatedBy,
+		CreatedByName:     po.CreatedByName,
+		CreatedAt:         po.CreatedAt,
 	}, nil
 }
 
@@ -103,15 +106,16 @@ func (uc *inboundUsecase) GetPurchaseOrder(ctx context.Context, id string) (*dto
 	}
 
 	return &dto.PurchaseOrderResponse{
-		ID:           po.ID,
-		PONumber:     po.PONumber,
-		SupplierName: po.SupplierName,
-		Status:       po.Status,
-		ExpectedDate: po.ExpectedDate,
-		Notes:        po.Notes,
-		CreatedBy:    po.CreatedBy,
-		CreatedByName: po.CreatedByName,
-		CreatedAt:    po.CreatedAt,
+		ID:                po.ID,
+		PONumber:          po.PONumber,
+		SupplierName:      po.SupplierName,
+		Status:            po.Status,
+		ExpectedDate:      po.ExpectedDate,
+		StorageLocationID: po.StorageLocationID,
+		Notes:             po.Notes,
+		CreatedBy:         po.CreatedBy,
+		CreatedByName:     po.CreatedByName,
+		CreatedAt:         po.CreatedAt,
 	}, nil
 }
 
@@ -135,20 +139,34 @@ func (uc *inboundUsecase) ListPurchaseOrders(ctx context.Context, page, limit in
 			})
 		}
 		result = append(result, &dto.PurchaseOrderResponse{
-			ID:           po.ID,
-			PONumber:     po.PONumber,
-			SupplierName: po.SupplierName,
-			Status:       po.Status,
-			ExpectedDate: po.ExpectedDate,
-			Notes:        po.Notes,
-			CreatedBy:    po.CreatedBy,
-			CreatedByName: po.CreatedByName,
-			CreatedAt:    po.CreatedAt,
-			Items:        poItems,
+			ID:                po.ID,
+			PONumber:          po.PONumber,
+			SupplierName:      po.SupplierName,
+			Status:            po.Status,
+			ExpectedDate:      po.ExpectedDate,
+			StorageLocationID: po.StorageLocationID,
+			Notes:             po.Notes,
+			CreatedBy:         po.CreatedBy,
+			CreatedByName:     po.CreatedByName,
+			CreatedAt:         po.CreatedAt,
+			Items:             poItems,
 		})
 	}
 
 	return result, total, nil
+}
+
+func (uc *inboundUsecase) ApprovePurchaseOrder(ctx context.Context, id string) error {
+	po, err := uc.poRepo.FindByID(ctx, id)
+	if err != nil {
+		return fmt.Errorf("purchase order not found")
+	}
+
+	if po.Status != "pending" {
+		return fmt.Errorf("only pending PO can be approved")
+	}
+
+	return uc.poRepo.UpdateStatus(ctx, id, "approved")
 }
 
 func (uc *inboundUsecase) ReceiveGoods(ctx context.Context, poID string, req *dto.ReceiveGoodsRequest, userID string) (*dto.GoodsReceiptResponse, error) {

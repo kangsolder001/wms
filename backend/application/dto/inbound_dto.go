@@ -3,10 +3,11 @@ package dto
 import "time"
 
 type CreatePurchaseOrderRequest struct {
-	SupplierName string                    `json:"supplier_name" validate:"required"`
-	ExpectedDate string                    `json:"expected_date"`
-	Notes        string                    `json:"notes"`
-	Items        []CreatePOItemRequest     `json:"items" validate:"required,dive"`
+	SupplierName      string                `json:"supplier_name" validate:"required"`
+	ExpectedDate      string                `json:"expected_date"`
+	StorageLocationID string                `json:"storage_location_id"`
+	Notes             string                `json:"notes"`
+	Items             []CreatePOItemRequest `json:"items" validate:"required,dive"`
 }
 
 type CreatePOItemRequest struct {
@@ -29,16 +30,18 @@ type ReceiveItemRequest struct {
 }
 
 type PurchaseOrderResponse struct {
-	ID           string                    `json:"id"`
-	PONumber     string                    `json:"po_number"`
-	SupplierName string                    `json:"supplier_name"`
-	Status       string                    `json:"status"`
-	ExpectedDate *time.Time                `json:"expected_date,omitempty"`
-	Notes        string                    `json:"notes"`
-	CreatedBy    string                    `json:"created_by"`
-	CreatedByName string                   `json:"created_by_name,omitempty"`
-	CreatedAt    time.Time                 `json:"created_at"`
-	Items        []POItemResponse          `json:"items,omitempty"`
+	ID                string                    `json:"id"`
+	PONumber          string                    `json:"po_number"`
+	SupplierName      string                    `json:"supplier_name"`
+	Status            string                    `json:"status"`
+	ExpectedDate      *time.Time                `json:"expected_date,omitempty"`
+	StorageLocationID string                    `json:"storage_location_id,omitempty"`
+	StorageLocationCode string                  `json:"storage_location_code,omitempty"`
+	Notes             string                    `json:"notes"`
+	CreatedBy         string                    `json:"created_by"`
+	CreatedByName     string                    `json:"created_by_name,omitempty"`
+	CreatedAt         time.Time                 `json:"created_at"`
+	Items             []POItemResponse          `json:"items,omitempty"`
 }
 
 type POItemResponse struct {

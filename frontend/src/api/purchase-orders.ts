@@ -6,6 +6,8 @@ export interface PurchaseOrder {
   supplier_name: string;
   status: string;
   expected_date?: string;
+  storage_location_id?: string;
+  storage_location_code?: string;
   notes?: string;
   created_by: string;
   created_by_name?: string;
@@ -24,6 +26,7 @@ export interface POItem {
 export interface CreatePORequest {
   supplier_name: string;
   expected_date?: string;
+  storage_location_id?: string;
   notes?: string;
   items: CreatePOItemRequest[];
 }
@@ -32,15 +35,6 @@ export interface CreatePOItemRequest {
   item_id: string;
   expected_quantity: number;
   unit_price?: number;
-}
-
-export interface PaginatedResponse<T> {
-  data: T[];
-  meta: {
-    page: number;
-    limit: number;
-    total: number;
-  };
 }
 
 export interface ReceiveGoodsRequest {
@@ -54,11 +48,21 @@ export interface ReceiveItemRequest {
   location_id: string;
 }
 
+export interface PaginatedResponse<T> {
+  data: T[];
+  meta: {
+    page: number;
+    limit: number;
+    total: number;
+  };
+}
+
 export const poApi = {
   list: (page = 1, limit = 10) =>
     api.get<PaginatedResponse<PurchaseOrder>>('/purchase-orders', { params: { page, limit } }),
   get: (id: string) => api.get<PurchaseOrder>(`/purchase-orders/${id}`),
   create: (data: CreatePORequest) => api.post<PurchaseOrder>('/purchase-orders', data),
+  approve: (id: string) => api.post(`/purchase-orders/${id}/approve`),
   receive: (id: string, data: ReceiveGoodsRequest) =>
     api.post(`/purchase-orders/${id}/receive`, data),
 };

@@ -121,3 +121,14 @@ func (h *InboundHandler) ReceiveGoods(c *gin.Context) {
 
 	response.JSON(c, http.StatusCreated, grn)
 }
+
+func (h *InboundHandler) ApprovePurchaseOrder(c *gin.Context) {
+	id := c.Param("id")
+
+	if err := h.inboundUC.ApprovePurchaseOrder(c.Request.Context(), id); err != nil {
+		response.Error(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	response.JSON(c, http.StatusOK, gin.H{"message": "purchase order approved"})
+}

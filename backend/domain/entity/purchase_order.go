@@ -3,17 +3,18 @@ package entity
 import "time"
 
 type PurchaseOrder struct {
-	ID           string                 `json:"id"`
-	PONumber     string                 `json:"po_number"`
-	SupplierName string                 `json:"supplier_name"`
-	Status       string                 `json:"status"`
-	ExpectedDate *time.Time             `json:"expected_date,omitempty"`
-	Notes        string                 `json:"notes"`
-	CreatedBy    string                 `json:"created_by"`
-	CreatedByName string                `json:"created_by_name,omitempty"`
-	CreatedAt    time.Time              `json:"created_at"`
-	UpdatedAt    time.Time              `json:"updated_at"`
-	Items        []PurchaseOrderItem    `json:"items,omitempty"`
+	ID                string                 `json:"id"`
+	PONumber          string                 `json:"po_number"`
+	SupplierName      string                 `json:"supplier_name"`
+	Status            string                 `json:"status"`
+	ExpectedDate      *time.Time             `json:"expected_date,omitempty"`
+	StorageLocationID string                 `json:"storage_location_id,omitempty"`
+	Notes             string                 `json:"notes"`
+	CreatedBy         string                 `json:"created_by"`
+	CreatedByName     string                 `json:"created_by_name,omitempty"`
+	CreatedAt         time.Time              `json:"created_at"`
+	UpdatedAt         time.Time              `json:"updated_at"`
+	Items             []PurchaseOrderItem    `json:"items,omitempty"`
 }
 
 type PurchaseOrderItem struct {
