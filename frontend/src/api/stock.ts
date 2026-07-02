@@ -19,6 +19,18 @@ export interface AdjustStockRequest {
   notes?: string;
 }
 
+export interface StockOpnameRequest {
+  location_id: string;
+  notes?: string;
+  items: StockOpnameItemRequest[];
+}
+
+export interface StockOpnameItemRequest {
+  item_id: string;
+  system_quantity: number;
+  actual_quantity: number;
+}
+
 export interface StockMovement {
   id: string;
   item_id: string;
@@ -43,6 +55,7 @@ export const stockApi = {
   getByItem: (itemId: string) =>
     api.get<Stock[]>('/stock', { params: { item_id: itemId } }),
   adjust: (data: AdjustStockRequest) => api.post('/stock/adjust', data),
+  opname: (data: StockOpnameRequest) => api.post('/stock/opname', data),
   listMovements: (page = 1, limit = 10) =>
     api.get('/stock/movements', { params: { page, limit } }),
 };

@@ -81,6 +81,7 @@ func NewRouter(
 				stock.GET("", inventoryHandler.ListStock)
 				stock.GET("/movements", inventoryHandler.ListMovements)
 				stock.POST("/adjust", roleMiddleware.RequireRole(managerRoles...), inventoryHandler.AdjustStock)
+				stock.POST("/opname", roleMiddleware.RequireRole(operatorRoles...), inventoryHandler.StockOpname)
 			}
 
 			po := auth.Group("/purchase-orders")

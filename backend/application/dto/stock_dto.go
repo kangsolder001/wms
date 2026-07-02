@@ -7,6 +7,18 @@ type AdjustStockRequest struct {
 	Notes      string  `json:"notes"`
 }
 
+type StockOpnameRequest struct {
+	LocationID string                  `json:"location_id" validate:"required"`
+	Notes      string                  `json:"notes"`
+	Items      []StockOpnameItemRequest `json:"items" validate:"required,dive"`
+}
+
+type StockOpnameItemRequest struct {
+	ItemID         string  `json:"item_id" validate:"required"`
+	SystemQuantity float64 `json:"system_quantity"`
+	ActualQuantity float64 `json:"actual_quantity" validate:"required"`
+}
+
 type StockResponse struct {
 	ID               string  `json:"id"`
 	ItemID           string  `json:"item_id"`

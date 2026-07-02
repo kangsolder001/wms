@@ -81,6 +81,28 @@ func (h *InventoryHandler) AdjustStock(c *gin.Context) {
 	response.JSON(c, http.StatusOK, gin.H{"message": "stock adjusted"})
 }
 
+func (h *InventoryHandler) StockOpname(c *gin.Context) {
+	var req dto.StockOpnameRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Error(c, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	if len(req.Items) == 0 {
+		response.Error(c, http.StatusBadRequest, "items is required")
+		return
+	}
+
+	userID := c.GetString("user_id")
+
+	if err := h.inventoryUC.StockOpname(c.Request.Context(), &req, userID); err != nil {
+		response.Error(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	response.JSON(c, http.StatusOK, gin.H{"message": "stock opname completed"})
+}
+
 func (h *InventoryHandler) ListMovements(c *gin.Context) {
 	page, _ := strconv.Atoi(c.Query("page"))
 	limit, _ := strconv.Atoi(c.Query("limit"))

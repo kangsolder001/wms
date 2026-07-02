@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"wms/application/dto"
@@ -14,6 +15,7 @@ type InventoryUsecase interface {
 	GetStock(ctx context.Context, page, limit int, itemID, locationID, search string) ([]*dto.StockResponse, int, error)
 	GetStockByItem(ctx context.Context, itemID string) ([]*dto.StockResponse, error)
 	AdjustStock(ctx context.Context, req *dto.AdjustStockRequest, userID string) error
+	StockOpname(ctx context.Context, req *dto.StockOpnameRequest, userID string) error
 	GetStockMovements(ctx context.Context, page, limit int) ([]*dto.StockMovementResponse, int, error)
 }
 
@@ -125,6 +127,45 @@ func (uc *inventoryUsecase) AdjustStock(ctx context.Context, req *dto.AdjustStoc
 	}
 
 	uc.log.Info("stock adjusted successfully", "item_id", req.ItemID, "location_id", req.LocationID)
+	return nil
+}
+
+func (uc *inventoryUsecase) StockOpname(ctx context.Context, req *dto.StockOpnameRequest, userID string) error {
+	uc.log.Info("stock opname", "location_id", req.LocationID, "items_count", len(req.Items))
+
+	for _, item := range req.Items {
+		diff := item.ActualQuantity - item.SystemQuantity
+		if diff == 0 {
+			continue
+		}
+
+		existing, _ := uc.stockRepo.FindByItemAndLocation(ctx, item.ItemID, req.LocationID)
+		if existing != nil {
+			uc.stockRepo.UpdateQuantity(ctx, existing.ID, item.ActualQuantity)
+		} else if item.ActualQuantity > 0 {
+			newStock := &entity.Stock{
+				ItemID:     item.ItemID,
+				LocationID: req.LocationID,
+				Quantity:   item.ActualQuantity,
+				UpdatedAt:  time.Now(),
+			}
+			uc.stockRepo.Create(ctx, newStock)
+		}
+
+		movement := &entity.StockMovement{
+			ItemID:        item.ItemID,
+			ToLocationID:  &req.LocationID,
+			Quantity:      diff,
+			MovementType:  "adjustment",
+			ReferenceType: "stock_opname",
+			Notes:         fmt.Sprintf("Opname: system=%.0f, actual=%.0f. %s", item.SystemQuantity, item.ActualQuantity, req.Notes),
+			CreatedBy:     userID,
+			CreatedAt:     time.Now(),
+		}
+		uc.stockMovementRepo.Create(ctx, movement)
+	}
+
+	uc.log.Info("stock opname completed", "location_id", req.LocationID)
 	return nil
 }
 
