@@ -20,14 +20,19 @@ func NewPostgresPurchaseOrderRepository(db *sql.DB, log logger.Logger) *postgres
 
 func (r *postgresPurchaseOrderRepository) FindByID(ctx context.Context, id string) (*entity.PurchaseOrder, error) {
 	po := &entity.PurchaseOrder{}
+	var storageLocationID, notes sql.NullString
 	err := r.db.QueryRowContext(ctx,
-		`SELECT id, po_number, supplier_name, status, expected_date, storage_location_id, notes, created_by, u.full_name, created_at, updated_at 
-		 FROM purchase_orders po
-		 LEFT JOIN users u ON po.created_by = u.id
-		 WHERE po.id = $1`, id,
-	).Scan(&po.ID, &po.PONumber, &po.SupplierName, &po.Status, &po.ExpectedDate, &po.StorageLocationID, &po.Notes, &po.CreatedBy, &po.CreatedByName, &po.CreatedAt, &po.UpdatedAt)
+		`SELECT id, po_number, supplier_name, status, expected_date, storage_location_id, notes, created_by, created_at, updated_at 
+		 FROM purchase_orders WHERE id = $1`, id,
+	).Scan(&po.ID, &po.PONumber, &po.SupplierName, &po.Status, &po.ExpectedDate, &storageLocationID, &notes, &po.CreatedBy, &po.CreatedAt, &po.UpdatedAt)
 	if err != nil {
 		return nil, fmt.Errorf("purchase order not found: %w", err)
+	}
+	if storageLocationID.Valid {
+		po.StorageLocationID = storageLocationID.String
+	}
+	if notes.Valid {
+		po.Notes = notes.String
 	}
 	return po, nil
 }
@@ -83,12 +88,15 @@ func (r *postgresPurchaseOrderRepository) List(ctx context.Context, page, limit 
 	var pos []*entity.PurchaseOrder
 	for rows.Next() {
 		po := &entity.PurchaseOrder{}
-		var storageLocationID, createdByName sql.NullString
-		if err := rows.Scan(&po.ID, &po.PONumber, &po.SupplierName, &po.Status, &po.ExpectedDate, &storageLocationID, &po.Notes, &po.CreatedBy, &createdByName, &po.CreatedAt, &po.UpdatedAt); err != nil {
+		var storageLocationID, createdByName, notes sql.NullString
+		if err := rows.Scan(&po.ID, &po.PONumber, &po.SupplierName, &po.Status, &po.ExpectedDate, &storageLocationID, &notes, &po.CreatedBy, &createdByName, &po.CreatedAt, &po.UpdatedAt); err != nil {
 			continue
 		}
 		if storageLocationID.Valid {
 			po.StorageLocationID = storageLocationID.String
+		}
+		if notes.Valid {
+			po.Notes = notes.String
 		}
 		if createdByName.Valid {
 			po.CreatedByName = createdByName.String

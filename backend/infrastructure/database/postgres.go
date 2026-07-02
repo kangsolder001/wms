@@ -200,6 +200,12 @@ func Migrate(db *sql.DB) error {
 				ALTER TABLE purchase_orders ADD COLUMN storage_location_id UUID REFERENCES locations(id);
 			END IF;
 		END $$`,
+		`DO $$ BEGIN
+			IF EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'purchase_orders_status_check') THEN
+				ALTER TABLE purchase_orders DROP CONSTRAINT purchase_orders_status_check;
+			END IF;
+			ALTER TABLE purchase_orders ADD CONSTRAINT purchase_orders_status_check CHECK (status IN ('pending','approved','received','cancelled'));
+		END $$`,
 	}
 
 	for _, a := range alterations {
