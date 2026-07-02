@@ -4,7 +4,7 @@ import "time"
 
 type CreatePurchaseOrderRequest struct {
 	SupplierName string                    `json:"supplier_name" validate:"required"`
-	ExpectedDate *time.Time                `json:"expected_date"`
+	ExpectedDate string                    `json:"expected_date"`
 	Notes        string                    `json:"notes"`
 	Items        []CreatePOItemRequest     `json:"items" validate:"required,dive"`
 }

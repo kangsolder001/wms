@@ -42,11 +42,22 @@ func NewInboundUsecase(
 func (uc *inboundUsecase) CreatePurchaseOrder(ctx context.Context, req *dto.CreatePurchaseOrderRequest, userID string) (*dto.PurchaseOrderResponse, error) {
 	uc.log.Info("creating purchase order", "supplier", req.SupplierName)
 
+	var expectedDate *time.Time
+	if req.ExpectedDate != "" {
+		t, err := time.Parse("2006-01-02", req.ExpectedDate)
+		if err != nil {
+			t, err = time.Parse(time.RFC3339, req.ExpectedDate)
+		}
+		if err == nil {
+			expectedDate = &t
+		}
+	}
+
 	po := &entity.PurchaseOrder{
 		PONumber:     fmt.Sprintf("PO-%s", time.Now().Format("20060102150405")),
 		SupplierName: req.SupplierName,
 		Status:       "pending",
-		ExpectedDate: req.ExpectedDate,
+		ExpectedDate: expectedDate,
 		Notes:        req.Notes,
 		CreatedBy:    userID,
 		CreatedAt:    time.Now(),
