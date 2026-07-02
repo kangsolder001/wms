@@ -83,8 +83,15 @@ func (r *postgresPurchaseOrderRepository) List(ctx context.Context, page, limit 
 	var pos []*entity.PurchaseOrder
 	for rows.Next() {
 		po := &entity.PurchaseOrder{}
-		if err := rows.Scan(&po.ID, &po.PONumber, &po.SupplierName, &po.Status, &po.ExpectedDate, &po.StorageLocationID, &po.Notes, &po.CreatedBy, &po.CreatedByName, &po.CreatedAt, &po.UpdatedAt); err != nil {
+		var storageLocationID, createdByName sql.NullString
+		if err := rows.Scan(&po.ID, &po.PONumber, &po.SupplierName, &po.Status, &po.ExpectedDate, &storageLocationID, &po.Notes, &po.CreatedBy, &createdByName, &po.CreatedAt, &po.UpdatedAt); err != nil {
 			continue
+		}
+		if storageLocationID.Valid {
+			po.StorageLocationID = storageLocationID.String
+		}
+		if createdByName.Valid {
+			po.CreatedByName = createdByName.String
 		}
 		pos = append(pos, po)
 	}
