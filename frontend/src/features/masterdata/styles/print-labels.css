@@ -32,61 +32,27 @@
 .label-info {
   text-align: center;
   overflow: hidden;
+  width: 100%;
+  max-width: 100%;
 }
 
-.label-sku {
+.label-info div {
   font-weight: bold;
-  font-size: 14px;
-  margin-bottom: 1px;
-}
-
-.label-name {
-  font-size: 12px;
-  margin-bottom: 1px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.label-category {
-  font-size: 10px;
-  color: #666;
-}
-
-.label-small .label-sku {
-  font-size: 10px;
-}
-
-.label-small .label-name {
+.label-small .label-info div {
   font-size: 8px;
 }
 
-.label-small .label-category {
-  font-size: 7px;
+.label-medium .label-info div {
+  font-size: 11px;
 }
 
-.label-medium .label-sku {
-  font-size: 14px;
-}
-
-.label-medium .label-name {
-  font-size: 12px;
-}
-
-.label-medium .label-category {
-  font-size: 10px;
-}
-
-.label-large .label-sku {
-  font-size: 18px;
-}
-
-.label-large .label-name {
-  font-size: 14px;
-}
-
-.label-large .label-category {
-  font-size: 12px;
+.label-large .label-info div {
+  font-size: 13px;
 }
 
 .print-area {

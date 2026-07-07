@@ -25,9 +25,9 @@ export default function QRLabel({ item, size }: QRLabelProps) {
           level="M"
         />
         <div className="label-info">
-          <div className="label-sku">{item.sku}</div>
-          <div className="label-name">{item.name}</div>
-          <div className="label-category">{item.category}</div>
+          <div>{item.sku}</div>
+          <div>{item.name}</div>
+          <div>{item.category}</div>
         </div>
       </div>
     </div>
