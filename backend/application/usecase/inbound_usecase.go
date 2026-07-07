@@ -213,7 +213,7 @@ func (uc *inboundUsecase) ReceiveGoods(ctx context.Context, poID string, req *dt
 			Quantity:      item.Quantity,
 			MovementType:  "receipt",
 			ReferenceType: "purchase_order",
-			ReferenceID:   poID,
+			ReferenceID:   &poID,
 			CreatedBy:     userID,
 			CreatedAt:     time.Now(),
 		}

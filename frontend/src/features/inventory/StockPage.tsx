@@ -104,22 +104,6 @@ export default function StockPage() {
       actual_quantity: values[`qty_${s.item_id}`] ?? s.quantity,
     }));
 
-    // Add new items not in current stock
-    if (values.new_items) {
-      for (const ni of values.new_items) {
-        if (ni.item_id && ni.actual_quantity !== undefined) {
-          const existing = items.find((i: any) => i.item_id === ni.item_id);
-          if (!existing) {
-            items.push({
-              item_id: ni.item_id,
-              system_quantity: 0,
-              actual_quantity: ni.actual_quantity,
-            });
-          }
-        }
-      }
-    }
-
     opnameMutation.mutate({
       location_id: locationId,
       notes: values.notes,
@@ -249,7 +233,7 @@ export default function StockPage() {
                   System: {stock.quantity}
                 </div>
                 <Form.Item
-                  name={['qty', stock.item_id]}
+                  name={`qty_${stock.item_id}`}
                   style={{ marginBottom: 0, minWidth: 120 }}
                   initialValue={stock.quantity}
                 >

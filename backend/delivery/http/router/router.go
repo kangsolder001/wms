@@ -41,9 +41,9 @@ func NewRouter(
 		MaxAge:           12 * time.Hour,
 	}))
 
-	adminRoles := []string{"admin"}
-	managerRoles := []string{"admin", "manager"}
-	operatorRoles := []string{"admin", "manager", "operator"}
+	adminRoles := []string{"superadmin"}
+	managerRoles := []string{"superadmin", "manager"}
+	operatorRoles := []string{"superadmin", "manager", "operator"}
 
 	api := r.Group("/api/v1")
 	{

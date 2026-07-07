@@ -6,7 +6,7 @@ import { authApi, type UserResponse } from '../../api/auth';
 import type { ColumnsType } from 'antd/es/table';
 
 const roleColors: Record<string, string> = {
-  admin: 'red',
+  superadmin: 'red',
   manager: 'blue',
   operator: 'green',
   viewer: 'default',
@@ -166,7 +166,7 @@ export default function UsersPage() {
             <Select>
               <Select.Option value="operator">Operator</Select.Option>
               <Select.Option value="manager">Manager</Select.Option>
-              <Select.Option value="admin">Admin</Select.Option>
+              <Select.Option value="superadmin">Super Admin</Select.Option>
             </Select>
           </Form.Item>
           <Form.Item

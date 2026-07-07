@@ -67,6 +67,7 @@ func (uc *authUsecase) Login(ctx context.Context, req *dto.LoginRequest) (*dto.L
 			Email:    user.Email,
 			FullName: user.FullName,
 			Role:     user.Role,
+			IsActive: user.IsActive,
 		},
 	}, nil
 }

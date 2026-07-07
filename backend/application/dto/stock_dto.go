@@ -39,7 +39,7 @@ type StockMovementResponse struct {
 	Quantity       float64 `json:"quantity"`
 	MovementType   string  `json:"movement_type"`
 	ReferenceType  string  `json:"reference_type"`
-	ReferenceID    string  `json:"reference_id"`
+	ReferenceID    *string `json:"reference_id,omitempty"`
 	Notes          string  `json:"notes"`
 	CreatedBy      string  `json:"created_by"`
 }

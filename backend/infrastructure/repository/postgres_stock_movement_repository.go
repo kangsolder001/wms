@@ -18,10 +18,15 @@ func NewPostgresStockMovementRepository(db *sql.DB, log logger.Logger) *postgres
 }
 
 func (r *postgresStockMovementRepository) Create(ctx context.Context, movement *entity.StockMovement) error {
+	var refID sql.NullString
+	if movement.ReferenceID != nil {
+		refID = sql.NullString{String: *movement.ReferenceID, Valid: true}
+	}
+	
 	err := r.db.QueryRowContext(ctx,
 		`INSERT INTO stock_movements (item_id, from_location_id, to_location_id, quantity, movement_type, reference_type, reference_id, notes, created_by, created_at) 
 		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id`,
-		movement.ItemID, movement.FromLocationID, movement.ToLocationID, movement.Quantity, movement.MovementType, movement.ReferenceType, movement.ReferenceID, movement.Notes, movement.CreatedBy, movement.CreatedAt,
+		movement.ItemID, movement.FromLocationID, movement.ToLocationID, movement.Quantity, movement.MovementType, movement.ReferenceType, refID, movement.Notes, movement.CreatedBy, movement.CreatedAt,
 	).Scan(&movement.ID)
 	return err
 }
@@ -47,8 +52,12 @@ func (r *postgresStockMovementRepository) ListByItem(ctx context.Context, itemID
 	var movements []*entity.StockMovement
 	for rows.Next() {
 		m := &entity.StockMovement{}
-		if err := rows.Scan(&m.ID, &m.ItemID, &m.FromLocationID, &m.ToLocationID, &m.Quantity, &m.MovementType, &m.ReferenceType, &m.ReferenceID, &m.Notes, &m.CreatedBy, &m.CreatedAt); err != nil {
+		var refID sql.NullString
+		if err := rows.Scan(&m.ID, &m.ItemID, &m.FromLocationID, &m.ToLocationID, &m.Quantity, &m.MovementType, &m.ReferenceType, &refID, &m.Notes, &m.CreatedBy, &m.CreatedAt); err != nil {
 			continue
+		}
+		if refID.Valid {
+			m.ReferenceID = &refID.String
 		}
 		movements = append(movements, m)
 	}
@@ -77,8 +86,12 @@ func (r *postgresStockMovementRepository) List(ctx context.Context, page, limit 
 	var movements []*entity.StockMovement
 	for rows.Next() {
 		m := &entity.StockMovement{}
-		if err := rows.Scan(&m.ID, &m.ItemID, &m.FromLocationID, &m.ToLocationID, &m.Quantity, &m.MovementType, &m.ReferenceType, &m.ReferenceID, &m.Notes, &m.CreatedBy, &m.CreatedAt); err != nil {
+		var refID sql.NullString
+		if err := rows.Scan(&m.ID, &m.ItemID, &m.FromLocationID, &m.ToLocationID, &m.Quantity, &m.MovementType, &m.ReferenceType, &refID, &m.Notes, &m.CreatedBy, &m.CreatedAt); err != nil {
 			continue
+		}
+		if refID.Valid {
+			m.ReferenceID = &refID.String
 		}
 		movements = append(movements, m)
 	}

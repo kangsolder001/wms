@@ -119,7 +119,7 @@ func (uc *transferUsecase) CompleteTransfer(ctx context.Context, id string) erro
 		Quantity:       transfer.Quantity,
 		MovementType:   "transfer_out",
 		ReferenceType:  "stock_transfer",
-		ReferenceID:    transfer.ID,
+		ReferenceID:    &transfer.ID,
 		CreatedBy:      transfer.CreatedBy,
 		CreatedAt:      time.Now(),
 	}
@@ -131,7 +131,7 @@ func (uc *transferUsecase) CompleteTransfer(ctx context.Context, id string) erro
 		Quantity:      transfer.Quantity,
 		MovementType:  "transfer_in",
 		ReferenceType: "stock_transfer",
-		ReferenceID:   transfer.ID,
+		ReferenceID:   &transfer.ID,
 		CreatedBy:     transfer.CreatedBy,
 		CreatedAt:     time.Now(),
 	}

@@ -48,7 +48,7 @@ func Migrate(db *sql.DB) error {
 			email VARCHAR(255) UNIQUE NOT NULL,
 			password_hash VARCHAR(255) NOT NULL,
 			full_name VARCHAR(100) NOT NULL,
-			role VARCHAR(20) NOT NULL CHECK (role IN ('admin','manager','operator','viewer')),
+			role VARCHAR(20) NOT NULL CHECK (role IN ('superadmin','manager','operator','viewer')),
 			is_active BOOLEAN DEFAULT true,
 			created_at TIMESTAMPTZ DEFAULT NOW(),
 			updated_at TIMESTAMPTZ DEFAULT NOW()
@@ -248,7 +248,7 @@ func Seed(db *sql.DB, log logger.Logger) {
 	operatorID := "a0000000-0000-0000-0000-000000000003"
 
 	_, err = tx.Exec(`INSERT INTO users (id, username, email, password_hash, full_name, role) VALUES
-		($1, 'admin', 'admin@wms.local', $2, 'Administrator', 'admin'),
+		($1, 'superadmin', 'admin@wms.local', $2, 'Administrator', 'superadmin'),
 		($3, 'manager', 'manager@wms.local', $4, 'Warehouse Manager', 'manager'),
 		($5, 'operator', 'operator@wms.local', $6, 'Warehouse Operator', 'operator')`,
 		adminID, string(hashedPassword), managerID, string(hashedManager), operatorID, string(hashedOperator))

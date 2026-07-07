@@ -43,7 +43,7 @@ export default function RegisterPage() {
             <Select placeholder="Select Role" size="large">
               <Select.Option value="operator">Operator</Select.Option>
               <Select.Option value="manager">Manager</Select.Option>
-              <Select.Option value="admin">Admin</Select.Option>
+              <Select.Option value="superadmin">Super Admin</Select.Option>
             </Select>
           </Form.Item>
           <Form.Item>

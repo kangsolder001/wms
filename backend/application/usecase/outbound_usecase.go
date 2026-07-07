@@ -162,7 +162,7 @@ func (uc *outboundUsecase) PickOrder(ctx context.Context, soID string, req *dto.
 				Quantity:       deduct,
 				MovementType:   "pick",
 				ReferenceType:  "sales_order",
-				ReferenceID:    soID,
+				ReferenceID:    &soID,
 				CreatedBy:      userID,
 				CreatedAt:      time.Now(),
 			}

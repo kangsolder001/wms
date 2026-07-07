@@ -15,7 +15,7 @@ type RegisterRequest struct {
 	Email    string `json:"email" validate:"required,email"`
 	Password string `json:"password" validate:"required,min=6"`
 	FullName string `json:"full_name" validate:"required"`
-	Role     string `json:"role" validate:"required,oneof=admin manager operator viewer"`
+	Role     string `json:"role" validate:"required,oneof=superadmin manager operator viewer"`
 }
 
 type UserResponse struct {
