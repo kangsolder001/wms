@@ -1,14 +1,18 @@
 import { useState } from 'react';
 import { Table, Button, Modal, Form, Input, InputNumber, Select, Space, Typography, message } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined, DeleteOutlined, PrinterOutlined } from '@ant-design/icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { itemApi } from '../../api/items';
 import type { Item, CreateItemRequest } from '../../api/items';
 import type { ColumnsType } from 'antd/es/table';
+import QRLabelModal from './components/QRLabelModal';
 
 export default function ItemsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Item | null>(null);
+  const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
+  const [printModalItems, setPrintModalItems] = useState<Item[]>([]);
+  const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
   const [form] = Form.useForm();
   const queryClient = useQueryClient();
 
@@ -36,6 +40,20 @@ export default function ItemsPage() {
     },
   });
 
+  const handlePrintSingle = (item: Item) => {
+    setPrintModalItems([item]);
+    setIsPrintModalOpen(true);
+  };
+
+  const handlePrintSelected = () => {
+    const selectedItems = data?.data?.filter((item: Item) =>
+      selectedRowKeys.includes(item.id)
+    ) || [];
+    setPrintModalItems(selectedItems);
+    setIsPrintModalOpen(true);
+    setSelectedRowKeys([]);
+  };
+
   const columns: ColumnsType<Item> = [
     { title: 'SKU', dataIndex: 'sku', key: 'sku' },
     { title: 'Name', dataIndex: 'name', key: 'name' },
@@ -46,9 +64,10 @@ export default function ItemsPage() {
       title: 'Actions',
       key: 'actions',
       fixed: 'right',
-      width: 100,
+      width: 150,
       render: (_: any, record: Item) => (
         <Space>
+          <Button icon={<PrinterOutlined />} onClick={() => handlePrintSingle(record)} />
           <Button icon={<EditOutlined />} onClick={() => { setEditingItem(record); setIsModalOpen(true); }} />
           <Button icon={<DeleteOutlined />} danger onClick={() => deleteMutation.mutate(record.id)} />
         </Space>
@@ -64,9 +83,16 @@ export default function ItemsPage() {
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 8 }}>
         <Typography.Title level={3} style={{ margin: 0 }}>Items</Typography.Title>
-        <Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditingItem(null); setIsModalOpen(true); }}>
-          Add Item
-        </Button>
+        <Space>
+          {selectedRowKeys.length > 0 && (
+            <Button icon={<PrinterOutlined />} onClick={handlePrintSelected}>
+              Print Selected ({selectedRowKeys.length})
+            </Button>
+          )}
+          <Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditingItem(null); setIsModalOpen(true); }}>
+            Add Item
+          </Button>
+        </Space>
       </div>
 
       <Table
@@ -76,6 +102,10 @@ export default function ItemsPage() {
         loading={isLoading}
         pagination={{ pageSize: 10 }}
         scroll={{ x: 'max-content' }}
+        rowSelection={{
+          selectedRowKeys,
+          onChange: setSelectedRowKeys,
+        }}
       />
 
       <Modal
@@ -107,6 +137,12 @@ export default function ItemsPage() {
           </Form.Item>
         </Form>
       </Modal>
+
+      <QRLabelModal
+        items={printModalItems}
+        isOpen={isPrintModalOpen}
+        onClose={() => setIsPrintModalOpen(false)}
+      />
     </div>
   );
 }
