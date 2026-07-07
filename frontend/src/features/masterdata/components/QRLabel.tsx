@@ -1,4 +1,4 @@
-import QRCode from 'qrcode.react';
+import { QRCodeCanvas as QRCode } from 'qrcode.react';
 import type { LabelSize } from './LabelSizeSelector';
 import '../styles/print-labels.css';
 
