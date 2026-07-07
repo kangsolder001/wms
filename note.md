@@ -29,7 +29,7 @@ docker compose -f docker-compose.yml exec backend go run ./cmd/seed/main.go
 # Backend:  http://localhost:8080
 
 # Login
-# admin/admin123, manager/manager123, operator/operator123
+# superadmin/admin123, manager/manager123, operator/operator123
 ```
 
 ## File Structure

@@ -13,7 +13,7 @@ Web-based Warehouse Management System built with Go backend (Clean Architecture)
 
 ## Features
 
-- **Auth & RBAC** — Login, JWT, 4 roles (admin, manager, operator, viewer)
+- **Auth & RBAC** — Login, JWT, 4 roles (superadmin, manager, operator, viewer)
 - **User Management** — List, create, edit, deactivate users (admin/manager only)
 - **Master Data** — Item/product catalog with SKU, categories, UoM
 - **Location Management** — Warehouse zones, aisles, racks, bins hierarchy
@@ -53,7 +53,7 @@ cd frontend && npm run dev
 
 | Username | Password | Role |
 |----------|----------|------|
-| admin | admin123 | admin |
+| superadmin | admin123 | superadmin |
 | manager | manager123 | manager |
 | operator | operator123 | operator |
 

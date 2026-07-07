@@ -643,9 +643,9 @@ func NewRouter(
 		})).ServeHTTP(ctx.Writer, ctx.Request)
 	})
 
-	adminRoles := []string{"admin"}
-	managerRoles := []string{"admin", "manager"}
-	operatorRoles := []string{"admin", "manager", "operator"}
+	adminRoles := []string{"superadmin"}
+	managerRoles := []string{"superadmin", "manager"}
+	operatorRoles := []string{"superadmin", "manager", "operator"}
 
 	api := r.Group("/api/v1")
 	{
