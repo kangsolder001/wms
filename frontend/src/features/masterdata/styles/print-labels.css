@@ -1,0 +1,88 @@
+.label-container {
+  border: 1px dashed #ccc;
+  padding: 8px;
+  display: inline-block;
+  background: white;
+}
+
+.label-small {
+  width: 50mm;
+  height: 30mm;
+}
+
+.label-medium {
+  width: 70mm;
+  height: 50mm;
+}
+
+.label-large {
+  width: 100mm;
+  height: 70mm;
+}
+
+.label-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 100%;
+}
+
+.label-small .label-content {
+  flex-direction: column;
+  gap: 4px;
+}
+
+.label-info {
+  flex: 1;
+  overflow: hidden;
+}
+
+.label-sku {
+  font-weight: bold;
+  font-size: 12px;
+  margin-bottom: 2px;
+}
+
+.label-name {
+  font-size: 10px;
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.label-category {
+  font-size: 9px;
+  color: #666;
+}
+
+.label-small .label-sku {
+  font-size: 10px;
+}
+
+.label-small .label-name {
+  font-size: 8px;
+}
+
+.label-small .label-category {
+  font-size: 7px;
+}
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .print-area,
+  .print-area * {
+    visibility: visible;
+  }
+  .print-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+  }
+  .label-container {
+    border: 1px dashed #ccc;
+    page-break-inside: avoid;
+  }
+}
