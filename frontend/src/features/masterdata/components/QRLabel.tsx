@@ -2,6 +2,8 @@ import { QRCodeCanvas as QRCode } from 'qrcode.react';
 import type { LabelSize } from './LabelSizeSelector';
 import '../styles/print-labels.css';
 
+const qrSizes: Record<LabelSize, number> = { small: 60, medium: 80, large: 100 };
+
 interface QRLabelProps {
   item: {
     sku: string;
@@ -19,7 +21,7 @@ export default function QRLabel({ item, size }: QRLabelProps) {
       <div className="label-content">
         <QRCode
           value={qrContent}
-          size={size === 'small' ? 60 : size === 'medium' ? 80 : 100}
+          size={qrSizes[size]}
           level="M"
         />
         <div className="label-info">

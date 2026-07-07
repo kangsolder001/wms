@@ -65,7 +65,7 @@ export default function ItemsPage() {
       key: 'actions',
       fixed: 'right',
       width: 150,
-      render: (_: any, record: Item) => (
+      render: (_: unknown, record: Item) => (
         <Space>
           <Button icon={<PrinterOutlined />} onClick={() => handlePrintSingle(record)} />
           <Button icon={<EditOutlined />} onClick={() => { setEditingItem(record); setIsModalOpen(true); }} />

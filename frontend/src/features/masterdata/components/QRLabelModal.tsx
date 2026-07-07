@@ -1,16 +1,11 @@
 import { useState, useRef } from 'react';
-import { Modal, Button, Space, Typography } from 'antd';
+import { Modal, Button, Space, Typography, message } from 'antd';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import QRLabel from './QRLabel';
 import LabelSizeSelector from './LabelSizeSelector';
 import type { LabelSize } from './LabelSizeSelector';
-
-interface Item {
-  sku: string;
-  name: string;
-  category: string;
-}
+import type { Item } from '../../../api/items';
 
 interface QRLabelModalProps {
   items: Item[];
@@ -28,23 +23,27 @@ export default function QRLabelModal({ items, isOpen, onClose }: QRLabelModalPro
 
   const handleDownloadPDF = async () => {
     if (!printAreaRef.current) return;
-    
-    const canvas = await html2canvas(printAreaRef.current, {
-      scale: 2,
-      useCORS: true,
-    });
-    
-    const imgData = canvas.toDataURL('image/png');
-    const pdf = new jsPDF({
-      orientation: 'landscape',
-      unit: 'mm',
-      format: 'a4',
-    });
-    
-    const imgWidth = 297;
-    const imgHeight = (canvas.height * imgWidth) / canvas.width;
-    pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
-    pdf.save('qr-labels.pdf');
+
+    try {
+      const canvas = await html2canvas(printAreaRef.current, {
+        scale: 2,
+        useCORS: true,
+      });
+
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({
+        orientation: 'landscape',
+        unit: 'mm',
+        format: 'a4',
+      });
+
+      const imgWidth = 297;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+      pdf.save('qr-labels.pdf');
+    } catch {
+      message.error('Failed to generate PDF. Please try again.');
+    }
   };
 
   return (
@@ -72,7 +71,7 @@ export default function QRLabelModal({ items, isOpen, onClose }: QRLabelModalPro
       <div className="print-area" ref={printAreaRef}>
         <Space wrap>
           {items.map((item, index) => (
-            <QRLabel key={index} item={item} size={labelSize} />
+            <QRLabel key={`${item.sku}-${index}`} item={item} size={labelSize} />
           ))}
         </Space>
       </div>
