@@ -43,12 +43,12 @@ func (uc *authUsecase) Login(ctx context.Context, req *dto.LoginRequest) (*dto.L
 	user, err := uc.userRepo.FindByUsername(ctx, req.Username)
 	if err != nil {
 		uc.log.Error("user not found", "username", req.Username, "error", err)
-		return nil, errors.New("invalid credentials")
+		return nil, errors.New("username not found")
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.Password)); err != nil {
 		uc.log.Error("invalid password", "username", req.Username)
-		return nil, errors.New("invalid credentials")
+		return nil, errors.New("wrong password")
 	}
 
 	token, err := uc.jwtService.GenerateToken(user.ID, user.Role)

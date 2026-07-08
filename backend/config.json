@@ -6,7 +6,7 @@
     "env": "development"
   },
   "database": {
-    "host": "localhost",
+    "host": "postgres",
     "port": 5432,
     "user": "wms_user",
     "password": "wms_password",
@@ -15,6 +15,12 @@
     "max_open_conns": 25,
     "max_idle_conns": 5,
     "conn_max_lifetime": "5m"
+  },
+  "redis": {
+    "host": "redis",
+    "port": 6379,
+    "password": "",
+    "db": 0
   },
   "auth": {
     "jwt_secret": "change-me-in-production",

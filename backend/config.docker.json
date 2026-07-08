@@ -16,6 +16,12 @@
     "max_idle_conns": 5,
     "conn_max_lifetime": "5m"
   },
+  "redis": {
+    "host": "redis",
+    "port": 6379,
+    "password": "",
+    "db": 0
+  },
   "auth": {
     "jwt_secret": "change-me-in-production",
     "jwt_expiry": "24h",
@@ -26,9 +32,10 @@
     "output": "stdout"
   },
   "cors": {
-    "allowed_origins": ["http://localhost:5173"],
+    "allowed_origins": ["http://localhost:5173", "http://192.168.1.9:3001"],
     "allowed_methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     "allowed_headers": ["Content-Type", "Authorization"],
     "allow_credentials": true
   }
+}
 }

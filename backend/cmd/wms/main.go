@@ -17,6 +17,7 @@ import (
 	"wms/infrastructure/auth"
 	"wms/infrastructure/database"
 	loggerInfra "wms/infrastructure/logger"
+	redisInfra "wms/infrastructure/redis"
 	postgresRepo "wms/infrastructure/repository"
 	"wms/application/usecase"
 )
@@ -38,6 +39,17 @@ func main() {
 	if err := database.Migrate(db); err != nil {
 		appLogger.Fatal("failed to run migrations", "error", err)
 	}
+
+	redisClient, err := redisInfra.NewRedisClient(redisInfra.RedisConfig{
+		Host:     cfg.Redis.Host,
+		Port:     cfg.Redis.Port,
+		Password: cfg.Redis.Password,
+		DB:       cfg.Redis.DB,
+	})
+	if err != nil {
+		appLogger.Fatal("failed to connect redis", "error", err)
+	}
+	defer redisClient.Close()
 
 	jwtService := auth.NewJWTService(cfg.Auth)
 
@@ -84,6 +96,7 @@ func main() {
 		authMiddleware,
 		roleMiddleware,
 		loggingMiddleware,
+		redisClient,
 		cfg.CORS,
 	)
 

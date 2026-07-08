@@ -10,6 +10,7 @@ import (
 	"wms/config"
 	"wms/delivery/http/handler"
 	"wms/delivery/http/middleware"
+	pkgredis "wms/pkg/redis"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -27,6 +28,7 @@ func NewRouter(
 	authMiddleware *middleware.AuthMiddleware,
 	roleMiddleware *middleware.RoleMiddleware,
 	loggingMiddleware *middleware.LoggingMiddleware,
+	redisClient pkgredis.RedisClient,
 	corsConfig config.CORSConfig,
 ) *gin.Engine {
 	r := gin.Default()
@@ -45,9 +47,11 @@ func NewRouter(
 	managerRoles := []string{"superadmin", "manager"}
 	operatorRoles := []string{"superadmin", "manager", "operator"}
 
+	rateLimiter := middleware.NewRateLimiter(redisClient, 10, 1*time.Minute)
+
 	api := r.Group("/api/v1")
 	{
-		api.POST("/auth/login", authHandler.Login)
+		api.POST("/auth/login", rateLimiter.LoginLimit(), authHandler.Login)
 
 		auth := api.Group("")
 		auth.Use(authMiddleware.Handle())

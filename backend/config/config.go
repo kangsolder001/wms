@@ -8,6 +8,7 @@ import (
 type Config struct {
 	App      AppConfig      `json:"app"`
 	Database DatabaseConfig `json:"database"`
+	Redis    RedisConfig    `json:"redis"`
 	Auth     AuthConfig     `json:"auth"`
 	Logger   LoggerConfig   `json:"logger"`
 	CORS     CORSConfig     `json:"cors"`
@@ -30,6 +31,13 @@ type DatabaseConfig struct {
 	MaxOpenConns    int    `json:"max_open_conns"`
 	MaxIdleConns    int    `json:"max_idle_conns"`
 	ConnMaxLifetime string `json:"conn_max_lifetime"`
+}
+
+type RedisConfig struct {
+	Host     string `json:"host"`
+	Port     int    `json:"port"`
+	Password string `json:"password"`
+	DB       int    `json:"db"`
 }
 
 type AuthConfig struct {

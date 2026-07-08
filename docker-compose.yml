@@ -2,12 +2,12 @@ services:
   postgres:
     image: postgres:16-alpine
     container_name: wms-postgres
+    ports:
+      - "5434:5432"
     environment:
       POSTGRES_USER: wms_user
       POSTGRES_PASSWORD: wms_password
       POSTGRES_DB: wms_db
-    ports:
-      - "5434:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -16,29 +16,42 @@ services:
       timeout: 5s
       retries: 5
 
+  redis:
+    image: redis:7-alpine
+    container_name: wms-redis
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   backend:
-    build: ./backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
     container_name: wms-backend
-    environment:
-      - DB_HOST=postgres
-      - DB_PORT=5432
-      - DB_USER=wms_user
-      - DB_PASSWORD=wms_password
-      - DB_NAME=wms_db
-      - JWT_SECRET=change-me-in-production
-      - CONFIG_FILE=/app/config.docker.json
     ports:
       - "8080:8080"
     depends_on:
       postgres:
         condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      - CONFIG_FILE=/app/config.json
     volumes:
       - ./backend:/app
-      - ./frontend/dist:/frontend/dist
-      - /app/tmp
+      - ./backend/config.json:/app/config.json
+    command: air -c .air.toml
 
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
     container_name: wms-frontend
     ports:
       - "5173:5173"
@@ -50,3 +63,4 @@ services:
 
 volumes:
   postgres_data:
+  redis_data:
