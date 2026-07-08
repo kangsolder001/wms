@@ -68,8 +68,9 @@ export default function MainLayout() {
 
   const sidebarContent = (
     <>
-      <div style={{ height: 32, margin: 16, color: '#CDD6F4', fontSize: 18, fontWeight: 'bold', textAlign: 'center' }}>
-        {collapsed ? 'WMS' : 'WMS System'}
+      <div style={{ margin: 16, textAlign: 'center' }}>
+        <img src="/logo.png" alt="WMS Logo" style={{ width: collapsed ? 40 : 80, height: 'auto' }} />
+        {!collapsed && <div style={{ color: '#CDD6F4', fontSize: 14, marginTop: 8 }}>WMS System</div>}
       </div>
       <Menu
         theme="dark"

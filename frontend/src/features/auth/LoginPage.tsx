@@ -34,6 +34,9 @@ export default function LoginPage() {
   return (
     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', background: isDark ? '#181825' : '#f0f2f5', padding: 16, transition: 'background 0.3s' }}>
       <Card style={{ width: '100%', maxWidth: 400 }}>
+        <div style={{ textAlign: 'center', marginBottom: 24 }}>
+          <img src="/logo.png" alt="WMS Logo" style={{ width: 120, height: 'auto' }} />
+        </div>
         <Title level={2} style={{ textAlign: 'center' }}>WMS Login</Title>
         <Form onFinish={onFinish} layout="vertical">
           <Form.Item name="username" rules={[{ required: true, message: 'Please enter username' }]}>
