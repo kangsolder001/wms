@@ -339,7 +339,7 @@ func Seed(db *sql.DB, log logger.Logger) {
 	_, err = tx.Exec(`INSERT INTO purchase_orders (id, po_number, supplier_name, status, expected_date, notes, created_by) VALUES
 		($1, 'PO-2025-001', 'PT Teknologi Maju',   'received',  '2025-06-15', 'Pengadaan laptop & aksesoris', $4),
 		($2, 'PO-2025-002', 'PT Furniture Jaya',    'pending',   '2025-07-10', 'Pengadaan meja & kursi',       $4),
-		($3, 'PO-2025-003', 'PT Bahan Kemas',       'partial',   '2025-07-15', 'Pengadaan kardus & packing',   $5)`,
+		($3, 'PO-2025-003', 'PT Bahan Kemas',       'pending',   '2025-07-15', 'Pengadaan kardus & packing',   $5)`,
 		po1ID, po2ID, po3ID, managerID, operatorID)
 	if err != nil {
 		log.Error("failed to seed purchase orders", "error", err)
