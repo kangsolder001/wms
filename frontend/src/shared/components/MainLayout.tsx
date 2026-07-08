@@ -70,7 +70,7 @@ export default function MainLayout() {
     <>
       <div style={{ margin: 16, textAlign: 'center' }}>
         <img src="/logo.png" alt="WMS Logo" style={{ width: collapsed ? 40 : 80, height: 'auto' }} />
-        {!collapsed && <div style={{ color: '#CDD6F4', fontSize: 14, marginTop: 8 }}>WMS System</div>}
+        {!collapsed && <div style={{ color: isDark ? '#c9d1d9' : '#24292f', fontSize: 14, marginTop: 8 }}>WMS System</div>}
       </div>
       <Menu
         theme="dark"
