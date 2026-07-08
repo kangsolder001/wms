@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Modal, Button, Space, Typography, message } from 'antd';
+import { Modal, Button, Space, Typography, InputNumber, message } from 'antd';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import QRLabel from './QRLabel';
@@ -15,6 +15,7 @@ interface QRLabelModalProps {
 
 export default function QRLabelModal({ items, isOpen, onClose }: QRLabelModalProps) {
   const [labelSize, setLabelSize] = useState<LabelSize>('small');
+  const [quantity, setQuantity] = useState<number>(1);
   const printAreaRef = useRef<HTMLDivElement>(null);
 
   const handlePrint = () => {
@@ -65,15 +66,23 @@ export default function QRLabelModal({ items, isOpen, onClose }: QRLabelModalPro
         <Space>
           <Typography.Text>Label Size:</Typography.Text>
           <LabelSizeSelector value={labelSize} onChange={setLabelSize} />
+          <Typography.Text>Quantity:</Typography.Text>
+          <InputNumber
+            min={1}
+            max={100}
+            value={quantity}
+            onChange={(value) => setQuantity(value || 1)}
+            style={{ width: 70 }}
+          />
         </Space>
       </div>
       
       <div className="print-area" ref={printAreaRef}>
-        <Space wrap>
-          {items.map((item, index) => (
-            <QRLabel key={`${item.sku}-${index}`} item={item} size={labelSize} />
-          ))}
-        </Space>
+        {items.map((item, index) =>
+          Array.from({ length: quantity }).map((_, qtyIndex) => (
+            <QRLabel key={`${item.sku}-${index}-${qtyIndex}`} item={item} size={labelSize} />
+          ))
+        )}
       </div>
     </Modal>
   );

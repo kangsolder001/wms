@@ -1,42 +1,30 @@
 .label-container {
   border: 1px dashed #ccc;
-  padding: 1px;
+  padding: 0;
   display: inline-block;
   background: white;
   text-align: center;
-}
-
-.label-small {
-  width: 50mm;
-  height: 30mm;
-}
-
-.label-medium {
-  width: 70mm;
-  height: 50mm;
-}
-
-.label-large {
-  width: 100mm;
-  height: 70mm;
+  line-height: 1;
 }
 
 .label-content {
-  display: flex;
+  display: inline-flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
-  height: 100%;
+  gap: 1px;
+}
+
+.label-content canvas {
+  display: block;
+  margin: 0;
+  padding: 0;
 }
 
 .label-info {
   text-align: center;
   overflow: hidden;
-  width: 100%;
-  max-width: 100%;
   line-height: 1;
-  margin-top: 0;
-  padding-top: 0;
+  margin-top: 1px;
 }
 
 .label-info div {
@@ -64,7 +52,7 @@
 .print-area {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
+  gap: 2px;
 }
 
 @media print {
