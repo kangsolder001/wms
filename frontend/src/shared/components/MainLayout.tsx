@@ -13,6 +13,7 @@ import {
   MenuOutlined,
   SunOutlined,
   UserAddOutlined,
+  AppstoreOutlined,
 } from '@ant-design/icons';
 import { useAuthStore } from '../../stores/authStore';
 import { useThemeStore } from '../../stores/themeStore';
@@ -21,12 +22,21 @@ const { Header, Sider, Content } = Layout;
 
 const baseMenuItems = [
   { key: '/', icon: <DashboardOutlined />, label: 'Dashboard' },
-  { key: '/items', icon: <ShoppingCartOutlined />, label: 'Items' },
-  { key: '/locations', icon: <EnvironmentOutlined />, label: 'Locations' },
   { key: '/stock', icon: <DatabaseOutlined />, label: 'Stock' },
   { key: '/purchase-orders', icon: <InboxOutlined />, label: 'Purchase Orders' },
   { key: '/sales-orders', icon: <ShopOutlined />, label: 'Sales Orders' },
   { key: '/transfers', icon: <SwapOutlined />, label: 'Transfers' },
+  {
+    key: 'master-data',
+    icon: <AppstoreOutlined />,
+    label: 'Master Data',
+    children: [
+      { key: '/items', icon: <ShoppingCartOutlined />, label: 'Items' },
+      { key: '/categories', icon: <AppstoreOutlined />, label: 'Categories' },
+      { key: '/locations', icon: <EnvironmentOutlined />, label: 'Locations' },
+      { key: '/zones', icon: <EnvironmentOutlined />, label: 'Zones' },
+    ],
+  },
 ];
 
 const MOBILE_BREAKPOINT = 768;

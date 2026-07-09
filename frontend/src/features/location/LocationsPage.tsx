@@ -3,6 +3,7 @@ import { Table, Button, Modal, Form, Input, InputNumber, Select, Space, Typograp
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { locationApi } from '../../api/locations';
+import { zoneApi } from '../../api/zones';
 import type { Location, CreateLocationRequest } from '../../api/locations';
 import type { ColumnsType } from 'antd/es/table';
 
@@ -15,6 +16,11 @@ export default function LocationsPage() {
   const { data, isLoading } = useQuery({
     queryKey: ['locations'],
     queryFn: () => locationApi.list().then((res) => res.data),
+  });
+
+  const { data: zonesData } = useQuery({
+    queryKey: ['zones-all'],
+    queryFn: () => zoneApi.listAll().then((res) => res.data.data),
   });
 
   const createMutation = useMutation({
@@ -94,7 +100,11 @@ export default function LocationsPage() {
             <Input />
           </Form.Item>
           <Form.Item name="zone" label="Zone">
-            <Input />
+            <Select
+              placeholder="Select zone"
+              allowClear
+              options={(zonesData || []).map((z: any) => ({ value: z.name, label: z.name }))}
+            />
           </Form.Item>
           <Form.Item name="type" label="Type" rules={[{ required: true }]}>
             <Select options={[{ value: 'storage', label: 'Storage' }, { value: 'receiving', label: 'Receiving' }, { value: 'shipping', label: 'Shipping' }, { value: 'staging', label: 'Staging' }]} />

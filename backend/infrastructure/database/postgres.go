@@ -58,9 +58,14 @@ func Migrate(db *sql.DB) error {
 			sku VARCHAR(50) UNIQUE NOT NULL,
 			name VARCHAR(255) NOT NULL,
 			description TEXT,
+			category_id UUID REFERENCES categories(id),
 			category VARCHAR(100),
+			barcode VARCHAR(500),
 			unit_of_measure VARCHAR(20) NOT NULL,
 			weight DECIMAL(10,2),
+			length DECIMAL(10,2),
+			width DECIMAL(10,2),
+			height DECIMAL(10,2),
 			is_active BOOLEAN DEFAULT true,
 			created_at TIMESTAMPTZ DEFAULT NOW(),
 			updated_at TIMESTAMPTZ DEFAULT NOW()
@@ -185,6 +190,22 @@ func Migrate(db *sql.DB) error {
 			created_by UUID REFERENCES users(id),
 			created_at TIMESTAMPTZ DEFAULT NOW()
 		)`,
+		`CREATE TABLE IF NOT EXISTS categories (
+			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+			name VARCHAR(100) UNIQUE NOT NULL,
+			abbreviation VARCHAR(10) UNIQUE NOT NULL,
+			description TEXT,
+			is_active BOOLEAN DEFAULT true,
+			created_at TIMESTAMPTZ DEFAULT NOW()
+		)`,
+		`CREATE TABLE IF NOT EXISTS zones (
+			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+			code VARCHAR(50) UNIQUE NOT NULL,
+			name VARCHAR(100) NOT NULL,
+			description TEXT,
+			is_active BOOLEAN DEFAULT true,
+			created_at TIMESTAMPTZ DEFAULT NOW()
+		)`,
 	}
 
 	for i, m := range migrations {
@@ -205,6 +226,36 @@ func Migrate(db *sql.DB) error {
 				ALTER TABLE purchase_orders DROP CONSTRAINT purchase_orders_status_check;
 			END IF;
 			ALTER TABLE purchase_orders ADD CONSTRAINT purchase_orders_status_check CHECK (status IN ('pending','approved','received','cancelled'));
+		END $$`,
+		`DO $$ BEGIN
+			IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'items' AND column_name = 'barcode') THEN
+				ALTER TABLE items ADD COLUMN barcode VARCHAR(500);
+			END IF;
+		END $$`,
+		`DO $$ BEGIN
+			IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'categories' AND column_name = 'abbreviation') THEN
+				ALTER TABLE categories ADD COLUMN abbreviation VARCHAR(10) UNIQUE;
+			END IF;
+		END $$`,
+		`DO $$ BEGIN
+			IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'items' AND column_name = 'category_id') THEN
+				ALTER TABLE items ADD COLUMN category_id UUID REFERENCES categories(id);
+			END IF;
+		END $$`,
+		`DO $$ BEGIN
+			IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'items' AND column_name = 'length') THEN
+				ALTER TABLE items ADD COLUMN length DECIMAL(10,2);
+			END IF;
+		END $$`,
+		`DO $$ BEGIN
+			IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'items' AND column_name = 'width') THEN
+				ALTER TABLE items ADD COLUMN width DECIMAL(10,2);
+			END IF;
+		END $$`,
+		`DO $$ BEGIN
+			IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'items' AND column_name = 'height') THEN
+				ALTER TABLE items ADD COLUMN height DECIMAL(10,2);
+			END IF;
 		END $$`,
 	}
 
@@ -300,6 +351,27 @@ func Seed(db *sql.DB, log logger.Logger) {
 		locIDs[5], locIDs[6], locIDs[7], locIDs[8], locIDs[9])
 	if err != nil {
 		log.Error("failed to seed locations", "error", err)
+		return
+	}
+
+	_, err = tx.Exec(`INSERT INTO categories (name, description) VALUES
+		('Electronics', 'Electronic devices and accessories'),
+		('Furniture', 'Office and warehouse furniture'),
+		('Packaging', 'Packaging materials and supplies'),
+		('Stationery', 'Office stationery and paper products')`)
+	if err != nil {
+		log.Error("failed to seed categories", "error", err)
+		return
+	}
+
+	_, err = tx.Exec(`INSERT INTO zones (code, name, description) VALUES
+		('RCV', 'Receiving', 'Receiving dock area'),
+		('ZA', 'Zone A', 'Main storage zone A'),
+		('ZB', 'Zone B', 'Secondary storage zone B'),
+		('STG', 'Staging', 'Staging and sorting area'),
+		('SHP', 'Shipping', 'Shipping dock area')`)
+	if err != nil {
+		log.Error("failed to seed zones", "error", err)
 		return
 	}
 

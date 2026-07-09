@@ -9,12 +9,13 @@ interface QRLabelProps {
     sku: string;
     name: string;
     category: string;
+    barcode?: string;
   };
   size: LabelSize;
 }
 
 export default function QRLabel({ item, size }: QRLabelProps) {
-  const qrContent = `${item.sku}|${item.name}|${item.category}`;
+  const qrContent = item.barcode || `${item.sku}|${item.name}|${item.category}`;
 
   return (
     <div className={`label-container label-${size}`}>

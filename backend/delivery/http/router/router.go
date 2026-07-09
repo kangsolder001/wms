@@ -1,10 +1,6 @@
 package router
 
 import (
-	"net/http"
-	"os"
-	"path/filepath"
-	"strings"
 	"time"
 
 	"wms/config"
@@ -20,6 +16,8 @@ func NewRouter(
 	authHandler *handler.AuthHandler,
 	itemHandler *handler.ItemHandler,
 	locationHandler *handler.LocationHandler,
+	categoryHandler *handler.CategoryHandler,
+	zoneHandler *handler.ZoneHandler,
 	inventoryHandler *handler.InventoryHandler,
 	inboundHandler *handler.InboundHandler,
 	outboundHandler *handler.OutboundHandler,
@@ -44,8 +42,8 @@ func NewRouter(
 	}))
 
 	adminRoles := []string{"superadmin"}
-	managerRoles := []string{"superadmin", "manager"}
-	operatorRoles := []string{"superadmin", "manager", "operator"}
+	managerRoles := []string{"superadmin", "admin", "manager"}
+	operatorRoles := []string{"superadmin", "admin", "manager", "operator"}
 
 	rateLimiter := middleware.NewRateLimiter(redisClient, 10, 1*time.Minute)
 
@@ -66,6 +64,7 @@ func NewRouter(
 			{
 				items.GET("", itemHandler.List)
 				items.POST("", roleMiddleware.RequireRole(managerRoles...), itemHandler.Create)
+				items.POST("/generate-sku", roleMiddleware.RequireRole(managerRoles...), itemHandler.GenerateSKU)
 				items.GET("/:id", itemHandler.Get)
 				items.PUT("/:id", roleMiddleware.RequireRole(managerRoles...), itemHandler.Update)
 				items.DELETE("/:id", roleMiddleware.RequireRole(adminRoles...), itemHandler.Delete)
@@ -78,6 +77,26 @@ func NewRouter(
 				locations.GET("/:id", locationHandler.Get)
 				locations.PUT("/:id", roleMiddleware.RequireRole(managerRoles...), locationHandler.Update)
 				locations.DELETE("/:id", roleMiddleware.RequireRole(adminRoles...), locationHandler.Delete)
+			}
+
+			categories := auth.Group("/categories")
+			{
+				categories.GET("", categoryHandler.List)
+				categories.GET("/all", categoryHandler.ListAll)
+				categories.POST("", roleMiddleware.RequireRole(managerRoles...), categoryHandler.Create)
+				categories.GET("/:id", categoryHandler.Get)
+				categories.PUT("/:id", roleMiddleware.RequireRole(managerRoles...), categoryHandler.Update)
+				categories.DELETE("/:id", roleMiddleware.RequireRole(adminRoles...), categoryHandler.Delete)
+			}
+
+			zones := auth.Group("/zones")
+			{
+				zones.GET("", zoneHandler.List)
+				zones.GET("/all", zoneHandler.ListAll)
+				zones.POST("", roleMiddleware.RequireRole(managerRoles...), zoneHandler.Create)
+				zones.GET("/:id", zoneHandler.Get)
+				zones.PUT("/:id", roleMiddleware.RequireRole(managerRoles...), zoneHandler.Update)
+				zones.DELETE("/:id", roleMiddleware.RequireRole(adminRoles...), zoneHandler.Delete)
 			}
 
 			stock := auth.Group("/stock")
@@ -117,26 +136,5 @@ func NewRouter(
 		}
 	}
 
-	serveFrontend(r, "../frontend/dist")
-
 	return r
-}
-
-func serveFrontend(r *gin.Engine, distPath string) {
-	if _, err := os.Stat(distPath); os.IsNotExist(err) {
-		return
-	}
-
-	fileServer := http.FileServer(http.Dir(distPath))
-
-	r.NoRoute(func(c *gin.Context) {
-		path := filepath.Join(distPath, c.Request.URL.Path)
-
-		if _, err := os.Stat(path); os.IsNotExist(err) || strings.HasSuffix(path, "/") {
-			c.File(filepath.Join(distPath, "index.html"))
-			return
-		}
-
-		fileServer.ServeHTTP(c.Writer, c.Request)
-	})
 }

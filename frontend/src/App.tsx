@@ -7,7 +7,9 @@ import LoginPage from './features/auth/LoginPage';
 import UsersPage from './features/auth/UsersPage';
 import DashboardPage from './features/dashboard/DashboardPage';
 import ItemsPage from './features/masterdata/ItemsPage';
+import CategoriesPage from './features/masterdata/CategoriesPage';
 import LocationsPage from './features/location/LocationsPage';
+import ZonesPage from './features/masterdata/ZonesPage';
 import StockPage from './features/inventory/StockPage';
 import PurchaseOrdersPage from './features/inbound/PurchaseOrdersPage';
 import SalesOrdersPage from './features/outbound/SalesOrdersPage';
@@ -208,7 +210,9 @@ function App() {
             >
               <Route index element={<DashboardPage />} />
               <Route path="items" element={<ItemsPage />} />
+              <Route path="categories" element={<CategoriesPage />} />
               <Route path="locations" element={<LocationsPage />} />
+              <Route path="zones" element={<ZonesPage />} />
               <Route path="stock" element={<StockPage />} />
               <Route path="purchase-orders" element={<PurchaseOrdersPage />} />
               <Route path="sales-orders" element={<SalesOrdersPage />} />

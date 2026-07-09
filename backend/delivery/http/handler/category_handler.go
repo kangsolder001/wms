@@ -12,32 +12,16 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type ItemHandler struct {
-	itemUC usecase.ItemUsecase
-	log    logger.Logger
+type CategoryHandler struct {
+	categoryUC usecase.CategoryUsecase
+	log        logger.Logger
 }
 
-func NewItemHandler(itemUC usecase.ItemUsecase, log logger.Logger) *ItemHandler {
-	return &ItemHandler{itemUC: itemUC, log: log}
+func NewCategoryHandler(categoryUC usecase.CategoryUsecase, log logger.Logger) *CategoryHandler {
+	return &CategoryHandler{categoryUC: categoryUC, log: log}
 }
 
-func (h *ItemHandler) GenerateSKU(c *gin.Context) {
-	var req dto.GenerateSKURequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		response.Error(c, http.StatusBadRequest, "invalid request body")
-		return
-	}
-
-	result, err := h.itemUC.GenerateSKU(c.Request.Context(), &req)
-	if err != nil {
-		response.Error(c, http.StatusBadRequest, err.Error())
-		return
-	}
-
-	response.JSON(c, http.StatusOK, result)
-}
-
-func (h *ItemHandler) List(c *gin.Context) {
+func (h *CategoryHandler) List(c *gin.Context) {
 	page, _ := strconv.Atoi(c.Query("page"))
 	limit, _ := strconv.Atoi(c.Query("limit"))
 	if page < 1 {
@@ -47,7 +31,7 @@ func (h *ItemHandler) List(c *gin.Context) {
 		limit = 10
 	}
 
-	items, total, err := h.itemUC.ListItems(c.Request.Context(), page, limit)
+	items, total, err := h.categoryUC.ListCategories(c.Request.Context(), page, limit)
 	if err != nil {
 		response.Error(c, http.StatusInternalServerError, err.Error())
 		return
@@ -60,10 +44,20 @@ func (h *ItemHandler) List(c *gin.Context) {
 	})
 }
 
-func (h *ItemHandler) Get(c *gin.Context) {
+func (h *CategoryHandler) ListAll(c *gin.Context) {
+	items, err := h.categoryUC.ListAllCategories(c.Request.Context())
+	if err != nil {
+		response.Error(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	response.JSON(c, http.StatusOK, items)
+}
+
+func (h *CategoryHandler) Get(c *gin.Context) {
 	id := c.Param("id")
 
-	item, err := h.itemUC.GetItem(c.Request.Context(), id)
+	item, err := h.categoryUC.GetCategory(c.Request.Context(), id)
 	if err != nil {
 		response.Error(c, http.StatusNotFound, err.Error())
 		return
@@ -72,14 +66,14 @@ func (h *ItemHandler) Get(c *gin.Context) {
 	response.JSON(c, http.StatusOK, item)
 }
 
-func (h *ItemHandler) Create(c *gin.Context) {
-	var req dto.CreateItemRequest
+func (h *CategoryHandler) Create(c *gin.Context) {
+	var req dto.CreateCategoryRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.Error(c, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
-	item, err := h.itemUC.CreateItem(c.Request.Context(), &req)
+	item, err := h.categoryUC.CreateCategory(c.Request.Context(), &req)
 	if err != nil {
 		response.Error(c, http.StatusBadRequest, err.Error())
 		return
@@ -88,16 +82,16 @@ func (h *ItemHandler) Create(c *gin.Context) {
 	response.JSON(c, http.StatusCreated, item)
 }
 
-func (h *ItemHandler) Update(c *gin.Context) {
+func (h *CategoryHandler) Update(c *gin.Context) {
 	id := c.Param("id")
 
-	var req dto.UpdateItemRequest
+	var req dto.UpdateCategoryRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.Error(c, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
-	item, err := h.itemUC.UpdateItem(c.Request.Context(), id, &req)
+	item, err := h.categoryUC.UpdateCategory(c.Request.Context(), id, &req)
 	if err != nil {
 		response.Error(c, http.StatusBadRequest, err.Error())
 		return
@@ -106,13 +100,13 @@ func (h *ItemHandler) Update(c *gin.Context) {
 	response.JSON(c, http.StatusOK, item)
 }
 
-func (h *ItemHandler) Delete(c *gin.Context) {
+func (h *CategoryHandler) Delete(c *gin.Context) {
 	id := c.Param("id")
 
-	if err := h.itemUC.DeleteItem(c.Request.Context(), id); err != nil {
+	if err := h.categoryUC.DeleteCategory(c.Request.Context(), id); err != nil {
 		response.Error(c, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	response.JSON(c, http.StatusOK, gin.H{"message": "item deleted"})
+	response.JSON(c, http.StatusOK, gin.H{"message": "category deleted"})
 }

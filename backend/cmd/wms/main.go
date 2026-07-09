@@ -56,6 +56,8 @@ func main() {
 	userRepo := postgresRepo.NewPostgresUserRepository(db, appLogger)
 	itemRepo := postgresRepo.NewPostgresItemRepository(db, appLogger)
 	locationRepo := postgresRepo.NewPostgresLocationRepository(db, appLogger)
+	categoryRepo := postgresRepo.NewPostgresCategoryRepository(db, appLogger)
+	zoneRepo := postgresRepo.NewPostgresZoneRepository(db, appLogger)
 	stockRepo := postgresRepo.NewPostgresStockRepository(db, appLogger)
 	purchaseOrderRepo := postgresRepo.NewPostgresPurchaseOrderRepository(db, appLogger)
 	salesOrderRepo := postgresRepo.NewPostgresSalesOrderRepository(db, appLogger)
@@ -63,8 +65,10 @@ func main() {
 	stockMovementRepo := postgresRepo.NewPostgresStockMovementRepository(db, appLogger)
 
 	authUC := usecase.NewAuthUsecase(userRepo, jwtService, appLogger)
-	itemUC := usecase.NewItemUsecase(itemRepo, appLogger)
+	itemUC := usecase.NewItemUsecase(itemRepo, categoryRepo, appLogger)
 	locationUC := usecase.NewLocationUsecase(locationRepo, appLogger)
+	categoryUC := usecase.NewCategoryUsecase(categoryRepo, appLogger)
+	zoneUC := usecase.NewZoneUsecase(zoneRepo, appLogger)
 	inventoryUC := usecase.NewInventoryUsecase(stockRepo, stockMovementRepo, appLogger)
 	inboundUC := usecase.NewInboundUsecase(purchaseOrderRepo, stockRepo, stockMovementRepo, appLogger)
 	outboundUC := usecase.NewOutboundUsecase(salesOrderRepo, stockRepo, stockMovementRepo, appLogger)
@@ -74,6 +78,8 @@ func main() {
 	authHandler := handler.NewAuthHandler(authUC, appLogger)
 	itemHandler := handler.NewItemHandler(itemUC, appLogger)
 	locationHandler := handler.NewLocationHandler(locationUC, appLogger)
+	categoryHandler := handler.NewCategoryHandler(categoryUC, appLogger)
+	zoneHandler := handler.NewZoneHandler(zoneUC, appLogger)
 	inventoryHandler := handler.NewInventoryHandler(inventoryUC, appLogger)
 	inboundHandler := handler.NewInboundHandler(inboundUC, appLogger)
 	outboundHandler := handler.NewOutboundHandler(outboundUC, appLogger)
@@ -88,6 +94,8 @@ func main() {
 		authHandler,
 		itemHandler,
 		locationHandler,
+		categoryHandler,
+		zoneHandler,
 		inventoryHandler,
 		inboundHandler,
 		outboundHandler,

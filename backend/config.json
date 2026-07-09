@@ -32,7 +32,7 @@
     "output": "stdout"
   },
   "cors": {
-    "allowed_origins": ["http://localhost:5173"],
+    "allowed_origins": ["http://localhost:5173", "http://localhost:3001"],
     "allowed_methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     "allowed_headers": ["Content-Type", "Authorization"],
     "allow_credentials": true
