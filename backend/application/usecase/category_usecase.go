@@ -32,6 +32,10 @@ func NewCategoryUsecase(categoryRepo repository.CategoryRepository, log logger.L
 func (uc *categoryUsecase) CreateCategory(ctx context.Context, req *dto.CreateCategoryRequest) (*dto.CategoryResponse, error) {
 	uc.log.Info("creating category", "name", req.Name, "abbreviation", req.Abbreviation)
 
+	if len(req.Abbreviation) != 3 {
+		return nil, errors.New("abbreviation must be exactly 3 characters")
+	}
+
 	category := &entity.Category{
 		Name:         req.Name,
 		Abbreviation: req.Abbreviation,
@@ -83,6 +87,9 @@ func (uc *categoryUsecase) UpdateCategory(ctx context.Context, id string, req *d
 		category.Name = *req.Name
 	}
 	if req.Abbreviation != nil {
+		if len(*req.Abbreviation) != 3 {
+			return nil, errors.New("abbreviation must be exactly 3 characters")
+		}
 		category.Abbreviation = *req.Abbreviation
 	}
 	if req.Description != nil {

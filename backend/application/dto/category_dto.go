@@ -2,7 +2,7 @@ package dto
 
 type CreateCategoryRequest struct {
 	Name         string `json:"name" validate:"required"`
-	Abbreviation string `json:"abbreviation" validate:"required"`
+	Abbreviation string `json:"abbreviation" validate:"required,len=3"`
 	Description  string `json:"description"`
 }
 

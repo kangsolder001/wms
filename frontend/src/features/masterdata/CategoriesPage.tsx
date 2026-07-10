@@ -88,8 +88,8 @@ export default function CategoriesPage() {
           <Form.Item name="name" label="Name" rules={[{ required: true }]}>
             <Input />
           </Form.Item>
-          <Form.Item name="abbreviation" label="Abbreviation" rules={[{ required: true }, { max: 10, message: 'Max 10 characters' }]}>
-            <Input />
+          <Form.Item name="abbreviation" label="Abbreviation" rules={[{ required: true }, { len: 3, message: 'Must be exactly 3 characters' }]}>
+            <Input maxLength={3} />
           </Form.Item>
           <Form.Item name="description" label="Description">
             <Input.TextArea />
