@@ -53,6 +53,22 @@ func Migrate(db *sql.DB) error {
 			created_at TIMESTAMPTZ DEFAULT NOW(),
 			updated_at TIMESTAMPTZ DEFAULT NOW()
 		)`,
+		`CREATE TABLE IF NOT EXISTS categories (
+			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+			name VARCHAR(100) UNIQUE NOT NULL,
+			abbreviation VARCHAR(10) UNIQUE NOT NULL,
+			description TEXT,
+			is_active BOOLEAN DEFAULT true,
+			created_at TIMESTAMPTZ DEFAULT NOW()
+		)`,
+		`CREATE TABLE IF NOT EXISTS zones (
+			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+			code VARCHAR(50) UNIQUE NOT NULL,
+			name VARCHAR(100) NOT NULL,
+			description TEXT,
+			is_active BOOLEAN DEFAULT true,
+			created_at TIMESTAMPTZ DEFAULT NOW()
+		)`,
 		`CREATE TABLE IF NOT EXISTS items (
 			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 			sku VARCHAR(50) UNIQUE NOT NULL,
@@ -190,22 +206,6 @@ func Migrate(db *sql.DB) error {
 			created_by UUID REFERENCES users(id),
 			created_at TIMESTAMPTZ DEFAULT NOW()
 		)`,
-		`CREATE TABLE IF NOT EXISTS categories (
-			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-			name VARCHAR(100) UNIQUE NOT NULL,
-			abbreviation VARCHAR(10) UNIQUE NOT NULL,
-			description TEXT,
-			is_active BOOLEAN DEFAULT true,
-			created_at TIMESTAMPTZ DEFAULT NOW()
-		)`,
-		`CREATE TABLE IF NOT EXISTS zones (
-			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-			code VARCHAR(50) UNIQUE NOT NULL,
-			name VARCHAR(100) NOT NULL,
-			description TEXT,
-			is_active BOOLEAN DEFAULT true,
-			created_at TIMESTAMPTZ DEFAULT NOW()
-		)`,
 	}
 
 	for i, m := range migrations {
@@ -308,50 +308,9 @@ func Seed(db *sql.DB, log logger.Logger) {
 		return
 	}
 
-	itemIDs := make([]string, 10)
-	for i := 0; i < 10; i++ {
-		itemIDs[i] = fmt.Sprintf("b0000000-0000-0000-0000-%012d", i+1)
-	}
-
-	_, err = tx.Exec(`INSERT INTO items (id, sku, name, description, category, unit_of_measure, weight) VALUES
-		($1,  'ELC-001', 'Laptop ASUS 14"',       'Laptop 14 inch AMD Ryzen 5',     'Electronics', 'unit', 1.50),
-		($2,  'ELC-002', 'Mouse Logitech M331',   'Wireless mouse',                 'Electronics', 'unit', 0.10),
-		($3,  'ELC-003', 'Keyboard Mechanical',    'RGB mechanical keyboard',         'Electronics', 'unit', 0.80),
-		($4,  'ELC-004', 'Monitor LG 24"',         '24 inch Full HD IPS monitor',     'Electronics', 'unit', 3.50),
-		($5,  'FUR-001', 'Meja Kerja Lipat',       'Meja lipat 120x60cm',            'Furniture',   'unit', 8.00),
-		($6,  'FUR-002', 'Kursi Ergonomis',        'Kursi kantor adjustable',         'Furniture',   'unit', 5.50),
-		($7,  'PKG-001', 'Kardus Box Kecil',       'Box kardus 30x20x15cm',           'Packaging',   'pcs',  0.05),
-		($8,  'PKG-002', 'Kardus Box Besar',       'Box kardus 60x40x40cm',           'Packaging',   'pcs',  0.15),
-		($9,  'STA-001', 'Tinta Printer Canon',    'Tinta hitam Canon GI-290',        'Stationery',  'unit', 0.20),
-		($10, 'STA-002', 'Kertas A4 500 lembar',   'HVS A4 70gsm',                   'Stationery',  'pack', 1.00)`,
-		itemIDs[0], itemIDs[1], itemIDs[2], itemIDs[3], itemIDs[4],
-		itemIDs[5], itemIDs[6], itemIDs[7], itemIDs[8], itemIDs[9])
-	if err != nil {
-		log.Error("failed to seed items", "error", err)
-		return
-	}
-
 	locIDs := make([]string, 10)
 	for i := 0; i < 10; i++ {
 		locIDs[i] = fmt.Sprintf("c0000000-0000-0000-0000-%012d", i+1)
-	}
-
-	_, err = tx.Exec(`INSERT INTO locations (id, code, name, zone, aisle, rack, level, bin, type, capacity) VALUES
-		($1,  'RCV-01', 'Receiving Dock 1',     'Receiving', 'A', '1', '1', '1', 'receiving', 500),
-		($2,  'RCV-02', 'Receiving Dock 2',     'Receiving', 'A', '1', '1', '2', 'receiving', 500),
-		($3,  'STR-A1', 'Zone A - Rack 1',      'Zone A',    'A', '1', '1', '1', 'storage',  200),
-		($4,  'STR-A2', 'Zone A - Rack 2',      'Zone A',    'A', '1', '2', '1', 'storage',  200),
-		($5,  'STR-A3', 'Zone A - Rack 3',      'Zone A',    'A', '1', '3', '1', 'storage',  200),
-		($6,  'STR-B1', 'Zone B - Rack 1',      'Zone B',    'B', '1', '1', '1', 'storage',  300),
-		($7,  'STR-B2', 'Zone B - Rack 2',      'Zone B',    'B', '1', '2', '1', 'storage',  300),
-		($8,  'STG-01', 'Staging Area',         'Staging',   'S', '1', '1', '1', 'staging',  100),
-		($9,  'SHP-01', 'Shipping Dock 1',      'Shipping',  'C', '1', '1', '1', 'shipping', 500),
-		($10, 'SHP-02', 'Shipping Dock 2',      'Shipping',  'C', '1', '1', '2', 'shipping', 500)`,
-		locIDs[0], locIDs[1], locIDs[2], locIDs[3], locIDs[4],
-		locIDs[5], locIDs[6], locIDs[7], locIDs[8], locIDs[9])
-	if err != nil {
-		log.Error("failed to seed locations", "error", err)
-		return
 	}
 
 	_, err = tx.Exec(`INSERT INTO categories (name, description) VALUES
@@ -372,6 +331,47 @@ func Seed(db *sql.DB, log logger.Logger) {
 		('SHP', 'Shipping', 'Shipping dock area')`)
 	if err != nil {
 		log.Error("failed to seed zones", "error", err)
+		return
+	}
+
+	_, err = tx.Exec(`INSERT INTO locations (id, code, name, zone, aisle, rack, level, bin, type, capacity) VALUES
+		($1,  'RCV-01', 'Receiving Dock 1',     'Receiving', 'A', '1', '1', '1', 'receiving', 500),
+		($2,  'RCV-02', 'Receiving Dock 2',     'Receiving', 'A', '1', '1', '2', 'receiving', 500),
+		($3,  'STR-A1', 'Zone A - Rack 1',      'Zone A',    'A', '1', '1', '1', 'storage',  200),
+		($4,  'STR-A2', 'Zone A - Rack 2',      'Zone A',    'A', '1', '2', '1', 'storage',  200),
+		($5,  'STR-A3', 'Zone A - Rack 3',      'Zone A',    'A', '1', '3', '1', 'storage',  200),
+		($6,  'STR-B1', 'Zone B - Rack 1',      'Zone B',    'B', '1', '1', '1', 'storage',  300),
+		($7,  'STR-B2', 'Zone B - Rack 2',      'Zone B',    'B', '1', '2', '1', 'storage',  300),
+		($8,  'STG-01', 'Staging Area',         'Staging',   'S', '1', '1', '1', 'staging',  100),
+		($9,  'SHP-01', 'Shipping Dock 1',      'Shipping',  'C', '1', '1', '1', 'shipping', 500),
+		($10, 'SHP-02', 'Shipping Dock 2',      'Shipping',  'C', '1', '1', '2', 'shipping', 500)`,
+		locIDs[0], locIDs[1], locIDs[2], locIDs[3], locIDs[4],
+		locIDs[5], locIDs[6], locIDs[7], locIDs[8], locIDs[9])
+	if err != nil {
+		log.Error("failed to seed locations", "error", err)
+		return
+	}
+
+	itemIDs := make([]string, 10)
+	for i := 0; i < 10; i++ {
+		itemIDs[i] = fmt.Sprintf("b0000000-0000-0000-0000-%012d", i+1)
+	}
+
+	_, err = tx.Exec(`INSERT INTO items (id, sku, name, description, category, unit_of_measure, weight) VALUES
+		($1,  'ELC-001', 'Laptop ASUS 14"',       'Laptop 14 inch AMD Ryzen 5',     'Electronics', 'unit', 1.50),
+		($2,  'ELC-002', 'Mouse Logitech M331',   'Wireless mouse',                 'Electronics', 'unit', 0.10),
+		($3,  'ELC-003', 'Keyboard Mechanical',    'RGB mechanical keyboard',         'Electronics', 'unit', 0.80),
+		($4,  'ELC-004', 'Monitor LG 24"',         '24 inch Full HD IPS monitor',     'Electronics', 'unit', 3.50),
+		($5,  'FUR-001', 'Meja Kerja Lipat',       'Meja lipat 120x60cm',            'Furniture',   'unit', 8.00),
+		($6,  'FUR-002', 'Kursi Ergonomis',        'Kursi kantor adjustable',         'Furniture',   'unit', 5.50),
+		($7,  'PKG-001', 'Kardus Box Kecil',       'Box kardus 30x20x15cm',           'Packaging',   'pcs',  0.05),
+		($8,  'PKG-002', 'Kardus Box Besar',       'Box kardus 60x40x40cm',           'Packaging',   'pcs',  0.15),
+		($9,  'STA-001', 'Tinta Printer Canon',    'Tinta hitam Canon GI-290',        'Stationery',  'unit', 0.20),
+		($10, 'STA-002', 'Kertas A4 500 lembar',   'HVS A4 70gsm',                   'Stationery',  'pack', 1.00)`,
+		itemIDs[0], itemIDs[1], itemIDs[2], itemIDs[3], itemIDs[4],
+		itemIDs[5], itemIDs[6], itemIDs[7], itemIDs[8], itemIDs[9])
+	if err != nil {
+		log.Error("failed to seed items", "error", err)
 		return
 	}
 
