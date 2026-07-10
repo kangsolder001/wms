@@ -26,27 +26,20 @@ Web-based Warehouse Management System built with Go backend (Clean Architecture)
 
 ## Quick Start
 
-### Docker (Recommended)
+### Local Development
 
 ```bash
-# Start all services (postgres, backend, frontend)
-docker compose -f docker-compose.yml up -d
-
-# Seed database
-docker compose -f docker-compose.yml exec backend go run ./cmd/seed/main.go
-```
-
-### Manual Setup
-
-```bash
-# 1. Start PostgreSQL
-make docker-up
+# 1. Start PostgreSQL & Redis (via Docker)
+docker compose -f docker-compose.prod.yml up postgres redis -d
 
 # 2. Start backend (port 8080)
 cd backend && make dev
 
-# 3. Start frontend (dev mode, port 5173)
+# 3. Start frontend (dev mode, port 3001)
 cd frontend && npm run dev
+
+# 4. Seed database
+cd backend && make seed
 ```
 
 ### Default Login
@@ -61,7 +54,7 @@ cd frontend && npm run dev
 
 | Service | URL |
 |---------|-----|
-| Frontend (Vite dev) | http://localhost:5173 |
+| Frontend (Vite dev) | http://localhost:3001 |
 | Backend API | http://localhost:8080 |
 
 ## Project Structure
@@ -91,24 +84,11 @@ wms/
 │       ├── api/                     # API client layer
 │       ├── stores/                  # Zustand state (auth, theme)
 │       └── shared/components/       # Layout, sidebar
-├── docker-compose.yml               # Dev setup (hot-reload)
-├── docker-compose.prod.yml          # Production setup
+├── docker-compose.prod.yml          # Production setup (Docker)
 └── Makefile
 ```
 
-## Docker
-
-### Development
-
-Uses volume mounts + hot-reload (air for Go, Vite HMR for frontend):
-
-```bash
-docker compose -f docker-compose.yml up -d
-docker compose -f docker-compose.yml logs -f  # View logs
-docker compose -f docker-compose.yml down -v  # Stop + clean DB
-```
-
-### Production
+## Docker (Production)
 
 Uses multi-stage builds, static frontend via Nginx, Go binary:
 

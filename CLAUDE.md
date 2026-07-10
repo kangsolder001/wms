@@ -333,12 +333,10 @@ const { data: categoriesData } = useQuery({
 
 ### Development
 
+Local development runs natively (Go + Vite). Only PostgreSQL & Redis via Docker:
+
 ```bash
-docker compose up -d              # Start all (postgres, redis, backend, frontend)
-docker compose up -d --build      # Rebuild and start
-docker compose logs -f backend    # View backend logs
-docker compose logs -f frontend   # View frontend logs
-docker compose down               # Stop all
+docker compose -f docker-compose.prod.yml up postgres redis -d
 ```
 
 ### Production
@@ -347,14 +345,14 @@ docker compose down               # Stop all
 docker compose -f docker-compose.prod.yml up --build -d
 ```
 
-### Services
+### Services (Production)
 
 | Service | Container | Port | Notes |
 |---------|-----------|------|-------|
-| PostgreSQL | wms-postgres | 5434→5432 | Data in volume `postgres_data` |
-| Redis | wms-redis | 6380→6379 | Data in volume `redis_data` |
-| Backend | wms-backend | 8080 | Hot-reload with `air` |
-| Frontend | wms-frontend | 3001 | Vite dev server |
+| PostgreSQL | wms-postgres | 5432 | Data in volume `postgres_data` |
+| Redis | wms-redis | 6379 | Data in volume `redis_data` |
+| Backend | wms-backend | 8080 | Go binary |
+| Frontend | wms-frontend | 80→${APP_PORT} | Nginx + static |
 
 ---
 
@@ -543,11 +541,11 @@ npm run lint              # Lint (oxlint)
 npx tsc --noEmit          # Type check
 
 # Docker
-docker compose up -d --build        # Rebuild all
-docker compose up -d --build backend   # Rebuild backend only
-docker compose up -d --build frontend  # Rebuild frontend only
-docker compose restart backend      # Restart backend (no rebuild)
-docker compose logs -f backend      # Tail backend logs
+docker compose -f docker-compose.prod.yml up --build -d        # Rebuild all
+docker compose -f docker-compose.prod.yml up --build backend   # Rebuild backend only
+docker compose -f docker-compose.prod.yml up --build frontend  # Rebuild frontend only
+docker compose -f docker-compose.prod.yml restart backend      # Restart backend (no rebuild)
+docker compose -f docker-compose.prod.yml logs -f backend      # Tail backend logs
 ```
 
 ---

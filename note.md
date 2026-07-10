@@ -20,12 +20,20 @@
 ## Cara Run
 ```bash
 # Dev (hot-reload)
-docker compose -f docker-compose.yml down -v
-docker compose -f docker-compose.yml up -d
-docker compose -f docker-compose.yml exec backend go run ./cmd/seed/main.go
+# 1. Start PostgreSQL & Redis
+docker compose -f docker-compose.prod.yml up postgres redis -d
+
+# 2. Start backend
+cd backend && make dev
+
+# 3. Start frontend
+cd frontend && npm run dev
+
+# 4. Seed database
+cd backend && make seed
 
 # Akses
-# Frontend: http://localhost:5173
+# Frontend: http://localhost:3001
 # Backend:  http://localhost:8080
 
 # Login
@@ -56,14 +64,13 @@ wms/
 │   │   ├── stores/authStore.ts   # Persist user + token ke localStorage
 │   │   └── App.tsx               # Routes (/users for admin/manager)
 │   └── vite.config.ts            # Proxy /api → backend
-├── docker-compose.yml            # Dev (hot-reload)
 └── docker-compose.prod.yml       # Production (nginx + binary)
 ```
 
 ## Design Decisions
 - **Registration accessible to admin AND manager**: User initially said admin-only, then corrected to include manager
 - **Seed code separate from main app**: `cmd/seed/main.go` as standalone entry point
-- **Docker dev vs prod separation**: Dev uses volume mounts + hot-reload (air, vite). Prod uses multi-stage builds + nginx
+- **Docker for production only**: Local dev runs natively, Docker only for production deployment
 - **CONFIG_FILE env var for Docker**: Backend config supports env var override
 - **authStore localStorage persistence**: User data (including role) must survive page reloads
 
