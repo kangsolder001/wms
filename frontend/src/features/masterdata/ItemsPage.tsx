@@ -52,8 +52,9 @@ export default function ItemsPage() {
     if (categoryId) {
       try {
         const res = await itemApi.generateSKU(categoryId);
-        setGeneratedSKU(res.data.sku);
-        form.setFieldValue('sku', res.data.sku);
+        const sku = res.data.data.sku;
+        setGeneratedSKU(sku);
+        form.setFieldValue('sku', sku);
       } catch {
         message.error('Failed to generate SKU');
       }
@@ -142,13 +143,21 @@ export default function ItemsPage() {
         <Form form={form} layout="vertical" onFinish={handleSubmit} initialValues={editingItem || {}}>
           <Form.Item name="category_id" label="Category" rules={[{ required: true }]}>
             <Select
+              showSearch
               placeholder="Select category"
+              filterOption={(input, option) =>
+                (option?.label as string)?.toLowerCase().includes(input.toLowerCase())
+              }
               onChange={handleCategoryChange}
               options={(categoriesData || []).map((cat: any) => ({ value: cat.id, label: `${cat.name} (${cat.abbreviation})` }))}
             />
           </Form.Item>
           <Form.Item name="sku" label="SKU">
-            <Input disabled placeholder="Auto-generated" />
+            <Input
+              readOnly
+              placeholder="Select category first"
+              style={generatedSKU ? { fontWeight: 600 } : {}}
+            />
           </Form.Item>
           <Form.Item name="name" label="Name" rules={[{ required: true }]}>
             <Input />

@@ -15,7 +15,7 @@ run: build
 
 # Development
 dev:
-	go run $(MAIN_PATH)/main.go
+	air -c .air.toml
 
 # Test
 test:

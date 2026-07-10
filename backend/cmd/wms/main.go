@@ -10,6 +10,7 @@ import (
 	"syscall"
 	"time"
 
+	"wms/application/usecase"
 	"wms/config"
 	"wms/delivery/http/handler"
 	"wms/delivery/http/middleware"
@@ -19,7 +20,6 @@ import (
 	loggerInfra "wms/infrastructure/logger"
 	redisInfra "wms/infrastructure/redis"
 	postgresRepo "wms/infrastructure/repository"
-	"wms/application/usecase"
 )
 
 func main() {
@@ -36,9 +36,9 @@ func main() {
 	}
 	defer db.Close()
 
-	if err := database.Migrate(db); err != nil {
-		appLogger.Fatal("failed to run migrations", "error", err)
-	}
+	// if err := database.Migrate(db); err != nil {
+	// 	appLogger.Fatal("failed to run migrations", "error", err)
+	// }
 
 	redisClient, err := redisInfra.NewRedisClient(redisInfra.RedisConfig{
 		Host:     cfg.Redis.Host,

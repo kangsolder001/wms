@@ -15,3 +15,4 @@ dist/
 wms.log
 .mimocode/
 tmp/
+backend/config.json

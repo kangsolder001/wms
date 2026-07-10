@@ -42,7 +42,7 @@ func (uc *itemUsecase) GenerateSKU(ctx context.Context, req *dto.GenerateSKURequ
 		return nil, err
 	}
 
-	sku := fmt.Sprintf("%s-%03d", category.Abbreviation, seq)
+	sku := fmt.Sprintf("%s-%04d", category.Abbreviation, seq)
 	return &dto.GenerateSKUResponse{SKU: sku}, nil
 }
 
@@ -57,7 +57,7 @@ func (uc *itemUsecase) CreateItem(ctx context.Context, req *dto.CreateItemReques
 		return nil, err
 	}
 
-	sku := fmt.Sprintf("%s-%03d", category.Abbreviation, seq)
+	sku := fmt.Sprintf("%s-%04d", category.Abbreviation, seq)
 
 	uc.log.Info("creating item", "sku", sku, "name", req.Name)
 

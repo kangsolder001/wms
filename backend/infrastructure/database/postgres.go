@@ -358,16 +358,16 @@ func Seed(db *sql.DB, log logger.Logger) {
 	}
 
 	_, err = tx.Exec(`INSERT INTO items (id, sku, name, description, category, unit_of_measure, weight) VALUES
-		($1,  'ELC-001', 'Laptop ASUS 14"',       'Laptop 14 inch AMD Ryzen 5',     'Electronics', 'unit', 1.50),
-		($2,  'ELC-002', 'Mouse Logitech M331',   'Wireless mouse',                 'Electronics', 'unit', 0.10),
-		($3,  'ELC-003', 'Keyboard Mechanical',    'RGB mechanical keyboard',         'Electronics', 'unit', 0.80),
-		($4,  'ELC-004', 'Monitor LG 24"',         '24 inch Full HD IPS monitor',     'Electronics', 'unit', 3.50),
-		($5,  'FUR-001', 'Meja Kerja Lipat',       'Meja lipat 120x60cm',            'Furniture',   'unit', 8.00),
-		($6,  'FUR-002', 'Kursi Ergonomis',        'Kursi kantor adjustable',         'Furniture',   'unit', 5.50),
-		($7,  'PKG-001', 'Kardus Box Kecil',       'Box kardus 30x20x15cm',           'Packaging',   'pcs',  0.05),
-		($8,  'PKG-002', 'Kardus Box Besar',       'Box kardus 60x40x40cm',           'Packaging',   'pcs',  0.15),
-		($9,  'STA-001', 'Tinta Printer Canon',    'Tinta hitam Canon GI-290',        'Stationery',  'unit', 0.20),
-		($10, 'STA-002', 'Kertas A4 500 lembar',   'HVS A4 70gsm',                   'Stationery',  'pack', 1.00)`,
+		($1,  'ELC-0001', 'Laptop ASUS 14"',       'Laptop 14 inch AMD Ryzen 5',     'Electronics', 'unit', 1.50),
+		($2,  'ELC-0002', 'Mouse Logitech M331',   'Wireless mouse',                 'Electronics', 'unit', 0.10),
+		($3,  'ELC-0003', 'Keyboard Mechanical',    'RGB mechanical keyboard',         'Electronics', 'unit', 0.80),
+		($4,  'ELC-0004', 'Monitor LG 24"',         '24 inch Full HD IPS monitor',     'Electronics', 'unit', 3.50),
+		($5,  'FUR-0001', 'Meja Kerja Lipat',       'Meja lipat 120x60cm',            'Furniture',   'unit', 8.00),
+		($6,  'FUR-0002', 'Kursi Ergonomis',        'Kursi kantor adjustable',         'Furniture',   'unit', 5.50),
+		($7,  'PKG-0001', 'Kardus Box Kecil',       'Box kardus 30x20x15cm',           'Packaging',   'pcs',  0.05),
+		($8,  'PKG-0002', 'Kardus Box Besar',       'Box kardus 60x40x40cm',           'Packaging',   'pcs',  0.15),
+		($9,  'STA-0001', 'Tinta Printer Canon',    'Tinta hitam Canon GI-290',        'Stationery',  'unit', 0.20),
+		($10, 'STA-0002', 'Kertas A4 500 lembar',   'HVS A4 70gsm',                   'Stationery',  'pack', 1.00)`,
 		itemIDs[0], itemIDs[1], itemIDs[2], itemIDs[3], itemIDs[4],
 		itemIDs[5], itemIDs[6], itemIDs[7], itemIDs[8], itemIDs[9])
 	if err != nil {
