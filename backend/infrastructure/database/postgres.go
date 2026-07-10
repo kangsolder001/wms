@@ -313,11 +313,11 @@ func Seed(db *sql.DB, log logger.Logger) {
 		locIDs[i] = fmt.Sprintf("c0000000-0000-0000-0000-%012d", i+1)
 	}
 
-	_, err = tx.Exec(`INSERT INTO categories (name, description) VALUES
-		('Electronics', 'Electronic devices and accessories'),
-		('Furniture', 'Office and warehouse furniture'),
-		('Packaging', 'Packaging materials and supplies'),
-		('Stationery', 'Office stationery and paper products')`)
+	_, err = tx.Exec(`INSERT INTO categories (name, abbreviation, description) VALUES
+		('Electronics', 'ELC', 'Electronic devices and accessories'),
+		('Furniture', 'FUR', 'Office and warehouse furniture'),
+		('Packaging', 'PKG', 'Packaging materials and supplies'),
+		('Stationery', 'STA', 'Office stationery and paper products')`)
 	if err != nil {
 		log.Error("failed to seed categories", "error", err)
 		return
