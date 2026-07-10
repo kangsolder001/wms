@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"errors"
+	"strings"
 	"time"
 
 	"wms/application/dto"
@@ -38,7 +39,7 @@ func (uc *categoryUsecase) CreateCategory(ctx context.Context, req *dto.CreateCa
 
 	category := &entity.Category{
 		Name:         req.Name,
-		Abbreviation: req.Abbreviation,
+		Abbreviation: strings.ToUpper(req.Abbreviation),
 		Description:  req.Description,
 		IsActive:     true,
 		CreatedAt:    time.Now(),
@@ -90,7 +91,7 @@ func (uc *categoryUsecase) UpdateCategory(ctx context.Context, id string, req *d
 		if len(*req.Abbreviation) != 3 {
 			return nil, errors.New("abbreviation must be exactly 3 characters")
 		}
-		category.Abbreviation = *req.Abbreviation
+		category.Abbreviation = strings.ToUpper(*req.Abbreviation)
 	}
 	if req.Description != nil {
 		category.Description = *req.Description
